@@ -143,6 +143,13 @@ fn pack(item: &Item, here: &Env, out: &mut impl Write) -> io::Result<u64> {
     {
         let mut tar = tar::Builder::new(&mut frames);
         tar.follow_symlinks(false);
+        if !item.run.is_empty() {
+            let text = crate::catalog::run_list(&item.run);
+            let mut h = tar::Header::new_gnu();
+            h.set_size(text.len() as u64);
+            h.set_mode(0o644);
+            tar.append_data(&mut h, list_name(item), text.as_slice())?;
+        }
         for (i, t) in item.templates(here.os).iter().enumerate() {
             let Some(p) = here.resolve(t) else { continue };
             let p = PathBuf::from(p);
@@ -258,10 +265,26 @@ pub fn fetch(ep: &Endpoint, need: Vec<String>, staging: &Path, on: impl Fn(&str,
     Ok(done)
 }
 
+/// A list's file: `0/<last part of its id>.txt`, which lands in `lists/` of the transfer folder.
+fn list_name(item: &Item) -> String {
+    format!("0/{}.txt", item.id.rsplit('/').next().unwrap_or("list"))
+}
+
 /// Moves an unpacked item from staging to this device's own place for each slot; what was there is renamed to
 /// `<name>.before-anysync`. Returns (placed paths, problems).
 pub fn place(item: &Item, staging: &Path, here: &Env) -> (Vec<String>, Vec<String>) {
     let (mut placed, mut problems) = (vec![], vec![]);
+    if !item.run.is_empty() {
+        let lists = staging.parent().unwrap_or(staging).join("lists");
+        let name = list_name(item);
+        let dst = lists.join(&name[2..]);
+        let _ = std::fs::create_dir_all(&lists);
+        match std::fs::rename(staging.join(safe(&item.id)).join(&name), &dst) {
+            Ok(()) => placed.push(dst.display().to_string()),
+            Err(e) => problems.push(format!("{}: {e}", dst.display())),
+        }
+        return (placed, problems);
+    }
     for (i, t) in item.templates(here.os).iter().enumerate() {
         let Some(dst) = here.resolve(t) else { continue };
         let slot = staging.join(safe(&item.id)).join(i.to_string());
@@ -313,7 +336,8 @@ mod tests {
         let linux = Env { os: Os::Linux, home: b.display().to_string(), vars: Default::default() };
         let vscode = Item::from(CATALOG.iter().find(|e| e.id == "editors/vscode").unwrap());
         let proj = Item::folder_child("files/documents", "proj").unwrap();
-        let items = vec![vscode.clone(), proj.clone()];
+        let list = Item { id: "tools/greeting".into(), name: "A list".into(), mac: vec![], win: vec![], linux: vec![], secret: false, note: String::new(), run: vec!["echo".into(), "hello".into()] };
+        let items = vec![vscode.clone(), proj.clone(), list.clone()];
 
         let key = seal::random::<32>();
         let (l, port) = listen().unwrap();
@@ -324,8 +348,8 @@ mod tests {
         let wrong = Endpoint { key: seal::random::<32>().to_vec(), ..ep.clone() };
         assert!(fetch(&wrong, vec![vscode.id.clone()], &staging, |_, _| {}).is_err());
 
-        let done = fetch(&ep, vec![vscode.id.clone(), proj.id.clone()], &staging, |_, _| {}).unwrap();
-        assert_eq!(done.len(), 2);
+        let done = fetch(&ep, vec![vscode.id.clone(), proj.id.clone(), list.id.clone()], &staging, |_, _| {}).unwrap();
+        assert_eq!(done.len(), 3);
         fetch(&ep, vec![], &staging, |_, _| {}).unwrap();
         server.join().unwrap().unwrap();
 
@@ -339,6 +363,8 @@ mod tests {
         place(&proj, &staging, &linux);
         assert!(b.join("Documents/proj/main.rs").exists());
         assert!(!b.join("Documents/proj/node_modules").exists(), "rebuildable folders stay behind");
+        assert_eq!(place(&list, &staging, &linux).1, Vec::<String>::new());
+        assert_eq!(std::fs::read_to_string(base.join("lists/greeting.txt")).unwrap().trim(), "hello", "a list made on the sender lands in lists/");
         let _ = std::fs::remove_dir_all(&base);
     }
 }

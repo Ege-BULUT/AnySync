@@ -36,12 +36,13 @@ pub fn offer(env: &Env) -> Offer {
         kids.sort();
         items.extend(kids.iter().filter_map(|k| Item::folder_child(id, k)));
     }
+    items.extend(crate::catalog::LISTS.iter().filter(|l| l.on.contains(&env.os) && crate::catalog::on_path(l.run[0])).map(Item::from));
     Offer { os: env.os.name().into(), home: env.home.clone(), items }
 }
 
-/// Whether `item` has a place on `os`.
+/// Whether `item` has a place on `os`; a list goes to any system.
 pub fn fits(item: &Item, os: Os) -> bool {
-    !item.templates(os).is_empty()
+    !item.run.is_empty() || !item.templates(os).is_empty()
 }
 
 /// The ids a receiver on `os` takes: those under any of `only` (an id or its start, "editors"), else all, and

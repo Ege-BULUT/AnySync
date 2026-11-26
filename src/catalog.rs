@@ -44,6 +44,9 @@ pub struct Item {
     pub secret: bool,
     #[serde(default)]
     pub note: String,
+    /// A list made on the sending system by this command (see LISTS); then the item has no paths.
+    #[serde(default)]
+    pub run: Vec<String>,
 }
 
 impl Item {
@@ -59,14 +62,14 @@ impl Item {
     pub fn folder_child(folder: &str, name: &str) -> Option<Item> {
         let (_, mac, win, linux) = FOLDERS.iter().find(|f| f.0 == folder)?;
         let t = |root: &str| vec![format!("{root}/{name}")];
-        Some(Item { id: format!("{folder}/{}", slug(name)), name: name.into(), mac: t(mac), win: t(win), linux: t(linux), secret: false, note: String::new() })
+        Some(Item { id: format!("{folder}/{}", slug(name)), name: name.into(), mac: t(mac), win: t(win), linux: t(linux), secret: false, note: String::new(), run: vec![] })
     }
 }
 
 impl From<&Entry> for Item {
     fn from(e: &Entry) -> Item {
         let own = |l: &[&str]| l.iter().map(|s| s.to_string()).collect();
-        Item { id: e.id.into(), name: e.name.into(), mac: own(e.mac), win: own(e.win), linux: own(e.linux), secret: e.secret, note: e.note.into() }
+        Item { id: e.id.into(), name: e.name.into(), mac: own(e.mac), win: own(e.win), linux: own(e.linux), secret: e.secret, note: e.note.into(), run: vec![] }
     }
 }
 
@@ -91,7 +94,7 @@ const fn s(id: &'static str, name: &'static str, mac: &'static [&'static str], w
     Entry { id, name, mac, win, linux, secret: true, note }
 }
 
-const VSCODE_NOTE: &str = "Extensions reinstall from the list in the transfer folder (`code --install-extension <id>`); settings that name paths of the old system need the new ones.";
+const VSCODE_NOTE: &str = "Extensions reinstall from the editor's list in `lists/` of the transfer folder; settings that name paths of the old system need the new ones.";
 
 pub const CATALOG: &[Entry] = &[
     // Shell and git
@@ -150,6 +153,67 @@ pub const FOLDERS: &[(&str, &str, &str, &str)] = &[
     ("files/videos", "~/Movies", "~/Videos", "~/Videos"),
 ];
 
+/// What is installed on the sending system, as the system's own tools list it, for the agent to install on the
+/// other. The command runs when the item is sent; `{out}` stands for a file it writes instead of printing.
+pub struct List {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub on: &'static [Os],
+    pub run: &'static [&'static str],
+    pub note: &'static str,
+}
+
+const ALL: &[Os] = &[Os::Mac, Os::Windows, Os::Linux];
+const PACKAGES: &str = "Install the apps and tools named here with this system's own package manager; many names are libraries pulled in by others, so skip those. Say in TODO-FOR-YOU.md which have no match here.";
+
+pub const LISTS: &[List] = &[
+    List { id: "tools/vscode-extensions", name: "VS Code extensions", on: ALL, run: &["code", "--list-extensions"], note: "Install each with `code --install-extension <id>`." },
+    List { id: "tools/cursor-extensions", name: "Cursor extensions", on: ALL, run: &["cursor", "--list-extensions"], note: "Install each with `cursor --install-extension <id>`." },
+    List { id: "tools/brew", name: "Homebrew packages", on: &[Os::Mac, Os::Linux], run: &["brew", "bundle", "dump", "--file=-"], note: "A Brewfile: with Homebrew here, `brew bundle --file <it>` after removing what this system can't run (casks off macOS). Otherwise see the other lists' note." },
+    List { id: "tools/winget", name: "winget packages", on: &[Os::Windows], run: &["winget", "export", "-o", "{out}", "--accept-source-agreements"], note: "From `winget export`: on Windows, `winget import -i <it>`. Elsewhere, install the apps named in it with this system's package manager." },
+    List { id: "tools/scoop", name: "Scoop packages", on: &[Os::Windows], run: &["scoop", "export"], note: PACKAGES },
+    List { id: "tools/apt", name: "apt packages installed by hand", on: &[Os::Linux], run: &["apt-mark", "showmanual"], note: PACKAGES },
+    List { id: "tools/dnf", name: "dnf packages installed by hand", on: &[Os::Linux], run: &["dnf", "repoquery", "--userinstalled"], note: PACKAGES },
+    List { id: "tools/pacman", name: "pacman packages installed by hand", on: &[Os::Linux], run: &["pacman", "-Qqe"], note: PACKAGES },
+    List { id: "tools/flatpak", name: "Flatpak apps", on: &[Os::Linux], run: &["flatpak", "list", "--app", "--columns=application"], note: "On Linux, `flatpak install <id>` for each." },
+    List { id: "tools/snap", name: "Snap packages", on: &[Os::Linux], run: &["snap", "list"], note: PACKAGES },
+    List { id: "tools/npm", name: "npm global packages", on: ALL, run: &["npm", "ls", "-g", "--depth=0"], note: "Install each with `npm install -g <name>` once Node is here." },
+    List { id: "tools/cargo", name: "cargo-installed tools", on: ALL, run: &["cargo", "install", "--list"], note: "Install each with `cargo install <name>` once Rust is here." },
+    List { id: "tools/pipx", name: "pipx tools", on: ALL, run: &["pipx", "list", "--short"], note: "Install each with `pipx install <name>` once pipx is here." },
+];
+
+impl From<&List> for Item {
+    fn from(l: &List) -> Item {
+        Item { id: l.id.into(), name: l.name.into(), mac: vec![], win: vec![], linux: vec![], secret: false, note: l.note.into(), run: l.run.iter().map(|s| s.to_string()).collect() }
+    }
+}
+
+/// Whether `prog` is on this system's PATH.
+pub fn on_path(prog: &str) -> bool {
+    let exts: &[&str] = if cfg!(windows) { &["", ".exe", ".cmd", ".bat"] } else { &[""] };
+    std::env::var_os("PATH").is_some_and(|p| std::env::split_paths(&p).any(|d| exts.iter().any(|x| d.join(format!("{prog}{x}")).is_file())))
+}
+
+/// A list's text: what the command printed (or wrote to `{out}`), and why it failed when it did.
+pub fn run_list(run: &[String]) -> Vec<u8> {
+    let out = std::env::temp_dir().join(format!("anysync-list-{}.txt", std::process::id()));
+    let args: Vec<String> = run[1..].iter().map(|a| a.replace("{out}", &out.display().to_string())).collect();
+    // `code` and `npm` are .cmd scripts on Windows, which only cmd runs.
+    let mut cmd = if cfg!(windows) { let mut c = std::process::Command::new("cmd"); c.arg("/C").arg(&run[0]); c } else { std::process::Command::new(&run[0]) };
+    let text = match cmd.args(&args).stdin(std::process::Stdio::null()).output() {
+        Ok(o) => {
+            let mut t = if run.iter().any(|a| a.contains("{out}")) { std::fs::read(&out).unwrap_or_default() } else { o.stdout };
+            if !o.status.success() {
+                t.extend(format!("\n# {} ended with {}: {}\n", run.join(" "), o.status, String::from_utf8_lossy(&o.stderr).trim()).into_bytes());
+            }
+            t
+        }
+        Err(e) => format!("# couldn't run {}: {e}\n", run[0]).into_bytes(),
+    };
+    let _ = std::fs::remove_file(&out);
+    text
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,6 +235,21 @@ mod tests {
             }
             assert!(!e.note.contains('\u{2014}') && !e.note.contains('\u{2013}'));
         }
+        for l in LISTS {
+            assert!(ids.insert(l.id), "{} twice", l.id);
+            assert!(!l.run.is_empty() && !l.on.is_empty() && !l.note.contains('\u{2014}') && !l.note.contains('\u{2013}'), "{}", l.id);
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_list_is_what_its_command_printed_or_wrote() {
+        let own = |l: &[&str]| l.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert_eq!(run_list(&own(&["echo", "a b"])), b"a b\n");
+        assert_eq!(run_list(&own(&["sh", "-c", "echo hi > \"$0\"", "{out}"])), b"hi\n");
+        let failed = String::from_utf8(run_list(&own(&["sh", "-c", "echo part; echo why >&2; exit 3"]))).unwrap();
+        assert!(failed.starts_with("part\n") && failed.contains("why"), "{failed}");
+        assert!(String::from_utf8(run_list(&own(&["no-such-tool-anysync"]))).unwrap().starts_with("# couldn't run"));
     }
 
     #[test]
