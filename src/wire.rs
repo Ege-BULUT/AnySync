@@ -64,10 +64,31 @@ fn get_u32(r: &mut impl Read) -> io::Result<Option<u32>> {
     }
 }
 
+/// An item's bytes so far, told to `on` at most five times a second, so a big folder shows progress before it ends.
+struct Tick<'a> {
+    on: &'a dyn Fn(u64),
+    bytes: u64,
+    told: Instant,
+}
+
+impl<'a> Tick<'a> {
+    fn new(on: &'a dyn Fn(u64)) -> Self {
+        Tick { on, bytes: 0, told: Instant::now() }
+    }
+
+    fn add(&mut self, n: usize) {
+        self.bytes += n as u64;
+        if self.told.elapsed() >= Duration::from_millis(200) {
+            self.told = Instant::now();
+            (self.on)(self.bytes);
+        }
+    }
+}
+
 /// Writes everything as `[u32 len][bytes]` frames; the caller ends an item with a 0 frame.
 struct Frames<'a, W: Write> {
     out: &'a mut W,
-    bytes: u64,
+    tick: Tick<'a>,
 }
 
 impl<W: Write> Write for Frames<'_, W> {
@@ -77,7 +98,7 @@ impl<W: Write> Write for Frames<'_, W> {
         }
         put_u32(self.out, buf.len() as u32)?;
         self.out.write_all(buf)?;
-        self.bytes += buf.len() as u64;
+        self.tick.add(buf.len());
         Ok(buf.len())
     }
 
@@ -91,6 +112,7 @@ struct Unframe<'a, R: Read> {
     inp: &'a mut R,
     left: usize,
     ended: bool,
+    tick: Tick<'a>,
 }
 
 impl<R: Read> Read for Unframe<'_, R> {
@@ -111,6 +133,7 @@ impl<R: Read> Read for Unframe<'_, R> {
             return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "the transfer was cut"));
         }
         self.left -= n;
+        self.tick.add(n);
         Ok(n)
     }
 }
@@ -137,9 +160,10 @@ fn add(tar: &mut tar::Builder<impl Write>, path: &Path, name: &Path, skip_rebuil
     }
 }
 
-/// An item's tar, written as frames: slot i's path as `i/<its name>`. Returns the bytes written.
-fn pack(item: &Item, here: &Env, out: &mut impl Write) -> io::Result<u64> {
-    let mut frames = Frames { out, bytes: 0 };
+/// An item's tar, written as frames: slot i's path as `i/<its name>`. Returns the bytes written; `tick` hears
+/// them as they go.
+fn pack(item: &Item, here: &Env, out: &mut impl Write, tick: &dyn Fn(u64)) -> io::Result<u64> {
+    let mut frames = Frames { out, tick: Tick::new(tick) };
     {
         let mut tar = tar::Builder::new(&mut frames);
         tar.follow_symlinks(false);
@@ -161,12 +185,12 @@ fn pack(item: &Item, here: &Env, out: &mut impl Write) -> io::Result<u64> {
         }
         tar.finish()?;
     }
-    let n = frames.bytes;
+    let n = frames.tick.bytes;
     put_u32(frames.out, 0)?;
     Ok(n)
 }
 
-/// What the sender has done so far.
+/// What one end has done so far on this connection (the receiver) or in all (the sender).
 #[derive(Clone, Debug, Default)]
 pub struct Progress {
     pub bytes: u64,
@@ -175,8 +199,8 @@ pub struct Progress {
     pub finished: bool,
 }
 
-/// Sends `items` to whoever connects with the key, until the receiver needs nothing.
-pub fn serve(listener: TcpListener, key: [u8; 32], items: Vec<Item>, here: &Env, on: impl Fn(&Progress)) -> Result<(), String> {
+/// Sends `items` to whoever connects with the key, until the receiver needs nothing; returns what was sent.
+pub fn serve(listener: TcpListener, key: [u8; 32], items: Vec<Item>, here: &Env, on: impl Fn(&Progress)) -> Result<Progress, String> {
     let mut p = Progress::default();
     let mut sent: std::collections::HashSet<String> = Default::default();
     loop {
@@ -192,7 +216,7 @@ pub fn serve(listener: TcpListener, key: [u8; 32], items: Vec<Item>, here: &Env,
         if hello.need.is_empty() {
             p.finished = true;
             on(&p);
-            return Ok(());
+            return Ok(p);
         }
         let mut out = seal::Writer::new(&key, io::BufWriter::with_capacity(1 << 20, stream)).map_err(|e| e.to_string())?;
         let result: io::Result<()> = (|| {
@@ -202,7 +226,8 @@ pub fn serve(listener: TcpListener, key: [u8; 32], items: Vec<Item>, here: &Env,
                 let head = serde_json::to_vec(&Header { id: item.id.clone() }).unwrap();
                 put_u32(&mut out, head.len() as u32)?;
                 out.write_all(&head)?;
-                p.bytes += pack(item, here, &mut out)?;
+                let before = p.clone();
+                p.bytes += pack(item, here, &mut out, &|n| on(&Progress { bytes: before.bytes + n, ..before.clone() }))?;
                 if sent.insert(item.id.clone()) {
                     p.items_done += 1;
                 }
@@ -224,8 +249,9 @@ pub fn safe(id: &str) -> String {
     id.replace('/', "__")
 }
 
-/// Connects to the sender and unpacks each needed item into `staging/<item>`, marking it done when whole.
-pub fn fetch(ep: &Endpoint, need: Vec<String>, staging: &Path, on: impl Fn(&str, u64)) -> Result<Vec<String>, String> {
+/// Connects to the sender and unpacks each needed item into `staging/<item>`, marking it done when whole. `on`
+/// hears this connection's progress, `current` being the item's id.
+pub fn fetch(ep: &Endpoint, need: Vec<String>, staging: &Path, on: impl Fn(&Progress)) -> Result<Vec<String>, String> {
     let key: [u8; 32] = ep.key.clone().try_into().map_err(|_| "bad transfer key")?;
     let mut last_err = String::from("no address to try");
     let stream = ep.addrs.iter().find_map(|a| {
@@ -244,6 +270,7 @@ pub fn fetch(ep: &Endpoint, need: Vec<String>, staging: &Path, on: impl Fn(&str,
     }
     let mut inp = seal::Reader::new(&key, BufReader::with_capacity(1 << 20, stream)).map_err(|e| e.to_string())?;
     let mut done = Vec::new();
+    let mut p = Progress::default();
     while let Some(len) = get_u32(&mut inp).map_err(|e| e.to_string())? {
         let mut head = vec![0u8; len as usize];
         inp.read_exact(&mut head).map_err(|e| e.to_string())?;
@@ -251,15 +278,20 @@ pub fn fetch(ep: &Endpoint, need: Vec<String>, staging: &Path, on: impl Fn(&str,
         let dest = staging.join(safe(&h.id));
         let _ = std::fs::remove_dir_all(&dest);
         std::fs::create_dir_all(&dest).map_err(|e| e.to_string())?;
-        let start = Instant::now();
-        let mut body = Unframe { inp: &mut inp, left: 0, ended: false };
+        p.current = h.id.clone();
+        on(&p);
+        let before = p.clone();
+        let tick = |n| on(&Progress { bytes: before.bytes + n, ..before.clone() });
+        let mut body = Unframe { inp: &mut inp, left: 0, ended: false, tick: Tick::new(&tick) };
         let mut ar = tar::Archive::new(&mut body);
         ar.set_preserve_permissions(true);
         ar.unpack(&dest).map_err(|e| format!("unpacking {}: {e}", h.id))?;
         // tar stops at its end marker; the frames after it up to the 0 frame are padding.
         io::copy(&mut body, &mut io::sink()).map_err(|e| e.to_string())?;
-        on(&h.id, start.elapsed().as_millis() as u64);
+        p.bytes += body.tick.bytes;
         std::fs::write(dest.with_extension("done"), b"").map_err(|e| e.to_string())?;
+        p.items_done += 1;
+        on(&p);
         done.push(h.id);
     }
     Ok(done)
@@ -346,12 +378,16 @@ mod tests {
         let ep = Endpoint { key: key.to_vec(), port, addrs: vec!["127.0.0.1".into()] };
         let staging = base.join("staging");
         let wrong = Endpoint { key: seal::random::<32>().to_vec(), ..ep.clone() };
-        assert!(fetch(&wrong, vec![vscode.id.clone()], &staging, |_, _| {}).is_err());
+        assert!(fetch(&wrong, vec![vscode.id.clone()], &staging, |_| {}).is_err());
 
-        let done = fetch(&ep, vec![vscode.id.clone(), proj.id.clone(), list.id.clone()], &staging, |_, _| {}).unwrap();
+        let heard = std::sync::Mutex::new(Progress::default());
+        let done = fetch(&ep, vec![vscode.id.clone(), proj.id.clone(), list.id.clone()], &staging, |p| *heard.lock().unwrap() = p.clone()).unwrap();
         assert_eq!(done.len(), 3);
-        fetch(&ep, vec![], &staging, |_, _| {}).unwrap();
-        server.join().unwrap().unwrap();
+        fetch(&ep, vec![], &staging, |_| {}).unwrap();
+        let sent = server.join().unwrap().unwrap();
+        let got = heard.into_inner().unwrap();
+        assert_eq!((got.items_done, sent.items_done), (3, 3));
+        assert!(got.bytes > 0 && got.bytes == sent.bytes, "both ends count the same bytes: {} and {}", got.bytes, sent.bytes);
 
         let (placed, problems) = place(&vscode, &staging, &linux);
         assert!(problems.is_empty(), "{problems:?}");

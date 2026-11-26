@@ -30,6 +30,8 @@ pub struct Bus {
     pub repo: String,
     token: String,
     cache: Mutex<HashMap<String, (String, Value)>>,
+    /// A local folder in place of the repo, same paths, for tests of a whole transfer without GitHub.
+    dir: Option<std::path::PathBuf>,
 }
 
 fn agent() -> ureq::Agent {
@@ -38,7 +40,12 @@ fn agent() -> ureq::Agent {
 
 impl Bus {
     pub fn new(repo: &str, token: &str) -> Bus {
-        Bus { repo: repo.trim().trim_start_matches("https://github.com/").trim_end_matches('/').into(), token: token.into(), cache: Mutex::default() }
+        Bus { repo: repo.trim().trim_start_matches("https://github.com/").trim_end_matches('/').into(), token: token.into(), cache: Mutex::default(), dir: None }
+    }
+
+    #[cfg(test)]
+    pub fn folder(dir: &std::path::Path) -> Bus {
+        Bus { repo: String::new(), token: String::new(), cache: Mutex::default(), dir: Some(dir.into()) }
     }
 
     /// GET with the cached ETag; None for a 404.
@@ -65,6 +72,9 @@ impl Bus {
 
     /// A file's bytes and sha.
     pub fn get(&self, path: &str) -> Result<Option<(Vec<u8>, String)>, String> {
+        if let Some(d) = &self.dir {
+            return Ok(std::fs::read(d.join(path)).ok().map(|b| (b, String::new())));
+        }
         let Some(v) = self.get_value(path)? else { return Ok(None) };
         let sha = v["sha"].as_str().unwrap_or_default().to_string();
         // Over 1 MB the contents API leaves `content` empty; the raw media type still gives the bytes.
@@ -92,11 +102,20 @@ impl Bus {
 
     /// The names in a folder; empty when it doesn't exist yet.
     pub fn list(&self, dir: &str) -> Result<Vec<String>, String> {
+        if let Some(d) = &self.dir {
+            return Ok(std::fs::read_dir(d.join(dir)).map(|r| r.filter_map(Result::ok).map(|e| e.file_name().to_string_lossy().into_owned()).collect()).unwrap_or_default());
+        }
         Ok(self.get_value(dir)?.and_then(|v| v.as_array().cloned()).unwrap_or_default().iter().filter_map(|e| e["name"].as_str().map(String::from)).collect())
     }
 
     /// Creates or replaces a file. `sha` is the version being replaced: None for a new file, or to look it up.
     pub fn put(&self, path: &str, bytes: &[u8], sha: Option<&str>, msg: &str) -> Result<String, String> {
+        if let Some(d) = &self.dir {
+            // Written aside and renamed, so a reader polling the folder never sees half a file.
+            let (to, part) = (d.join(path), d.join(format!("{path}.part")));
+            std::fs::create_dir_all(to.parent().unwrap()).and_then(|_| std::fs::write(&part, bytes)).and_then(|_| std::fs::rename(&part, &to)).map_err(|e| e.to_string())?;
+            return Ok(String::new());
+        }
         // Two devices committing to the branch at the same moment get a 409 for the slower one: try again.
         let mut tries = 0;
         loop {
@@ -161,6 +180,8 @@ pub fn ensure_repo(token: &str, repo: &str) -> Result<(), String> {
 pub struct Device {
     pub id: String,
     pub name: String,
+    /// The system it runs (`Os::name`); the look is only how it is drawn, and the person may change it.
+    pub os: String,
     pub look: Look,
     /// The X25519 public key, base64.
     pub key: String,

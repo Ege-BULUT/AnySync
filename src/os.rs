@@ -30,6 +30,16 @@ impl Os {
         }
     }
 
+    /// From `name()`, or from a look's `os` ("mac", "windows", "linux").
+    pub fn parse(s: &str) -> Option<Os> {
+        match s.to_lowercase().as_str() {
+            "macos" | "mac" => Some(Os::Mac),
+            "windows" => Some(Os::Windows),
+            "linux" => Some(Os::Linux),
+            _ => None,
+        }
+    }
+
     pub fn sep(self) -> char {
         if self == Os::Windows { '\\' } else { '/' }
     }

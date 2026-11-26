@@ -1,15 +1,21 @@
 //! One transfer between two devices, on the bus under `transfers/<time>_<sender>_<receiver>/`: the offer (sealed to
 //! the receiver), the picks (sealed to the sender), the stream key (sealed to the receiver), and each side's state.
+//!
+//! `send` and `receive` are the two sides, the same for the command line and the window: each takes the person's
+//! choice through a closure (`--only`, or the window's ticks) and tells its progress to another.
 
+use std::cell::Cell;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-use crate::bus::{self, Answer, Bus, Party, Request, Session};
+use crate::bus::{self, Answer, Bus, Device, Party, Request, Session};
 use crate::catalog::{CATALOG, FOLDERS, Item};
 use crate::os::{Env, Os};
-use crate::{seal, wire};
+use crate::wire::{self, Endpoint};
+use crate::seal;
 
 /// What the sender offers: its system (`macOS`, `Windows`, `Linux`) and home folder (for the brief's path rewrites) and the items it has.
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -45,11 +51,32 @@ pub fn fits(item: &Item, os: Os) -> bool {
     !item.run.is_empty() || !item.templates(os).is_empty()
 }
 
-/// The ids a receiver on `os` takes: those under any of `only` (an id or its start, "editors"), else all, and
-/// never one without a place on its system.
+/// Whether `id` is under any of `only` (an id or its start, "editors"); everything is when `only` is empty.
+pub fn wanted(id: &str, only: &[String]) -> bool {
+    only.is_empty() || only.iter().any(|p| id == p || id.starts_with(&format!("{p}/")))
+}
+
+/// The ids a receiver on `os` takes: those under any of `only`, and never one without a place on its system.
 pub fn picks(offer: &Offer, os: Os, only: &[String]) -> Picks {
-    let wanted = |id: &str| only.is_empty() || only.iter().any(|p| id == p || id.starts_with(&format!("{p}/")));
-    Picks { ids: offer.items.iter().filter(|i| fits(i, os) && wanted(&i.id)).map(|i| i.id.clone()).collect() }
+    Picks { ids: offer.items.iter().filter(|i| fits(i, os) && wanted(&i.id, only)).map(|i| i.id.clone()).collect() }
+}
+
+/// The order the window lists items in, by the first part of their id.
+pub const GROUPS: [&str; 10] = ["dev", "secrets", "shell", "editors", "terminals", "notes", "browsers", "ai", "tools", "files"];
+
+/// Items by the first part of their id, in GROUPS order; a part GROUPS doesn't name comes after them, in the
+/// order first seen. Empty groups are left out.
+pub fn groups(items: &[Item]) -> Vec<(String, Vec<&Item>)> {
+    let mut out: Vec<(String, Vec<&Item>)> = GROUPS.iter().map(|g| (g.to_string(), vec![])).collect();
+    for i in items {
+        let g = i.id.split('/').next().unwrap_or_default();
+        match out.iter_mut().find(|(n, _)| n == g) {
+            Some((_, v)) => v.push(i),
+            None => out.push((g.to_string(), vec![i])),
+        }
+    }
+    out.retain(|(_, v)| !v.is_empty());
+    out
 }
 
 /// Sealed files are stored as base64 text: GitHub's contents API reads some binary files as text in a guessed
@@ -65,17 +92,19 @@ pub fn get_sealed<T: DeserializeOwned>(b: &Bus, path: &str, secret: &[u8; 32]) -
     serde_json::from_slice(&plain).map(Some).map_err(|e| format!("{path}: {e}"))
 }
 
-/// Approves a request: makes the transfer folder with its session.json and records the answer.
-pub fn approve(b: &Bus, mut r: Request, sha: &str, names: &std::collections::HashMap<String, String>) -> Result<Request, String> {
-    let (sender, receiver) = r.sides();
-    let at = bus::now();
-    let dir = bus::transfer_dir(at, sender, receiver);
-    let party = |id: &str| Party { id: id.into(), name: names.get(id).cloned().unwrap_or_default() };
-    let s = Session { sender: party(sender), receiver: party(receiver), state: "offering".into(), started: at, started_utc: bus::utc(at), updated: at, ..Session::default() };
-    b.put_json(&format!("{dir}/session.json"), &s, None, &format!("transfer {sender} to {receiver}"))?;
-    r.transfer = dir;
-    r.answer = Answer::Accepted;
-    b.put_json(&r.path(), &r, Some(sha), &format!("Accepted {}", r.path()))?;
+/// Answers a request. A yes makes the transfer folder with its session.json first.
+pub fn approve(b: &Bus, mut r: Request, sha: &str, names: &std::collections::HashMap<String, String>, yes: bool) -> Result<Request, String> {
+    if yes {
+        let (sender, receiver) = r.sides();
+        let at = bus::now();
+        let dir = bus::transfer_dir(at, sender, receiver);
+        let party = |id: &str| Party { id: id.into(), name: names.get(id).cloned().unwrap_or_default() };
+        let s = Session { sender: party(sender), receiver: party(receiver), state: "offering".into(), started: at, started_utc: bus::utc(at), updated: at, ..Session::default() };
+        b.put_json(&format!("{dir}/session.json"), &s, None, &format!("transfer {sender} to {receiver}"))?;
+        r.transfer = dir;
+    }
+    r.answer = if yes { Answer::Accepted } else { Answer::Declined };
+    b.put_json(&r.path(), &r, Some(sha), &format!("{:?} {}", r.answer, r.path()))?;
     Ok(r)
 }
 
@@ -129,6 +158,117 @@ pub fn finish(offer: &Offer, picks: &Picks, here: &Env, from: &str, dir: &Path) 
     (placed.iter().map(|p| p.1.len()).sum(), placed.iter().map(|p| p.2.len()).sum())
 }
 
+// The two sides ------------------------------------------------------------------------------------------
+
+/// What one side of a transfer is doing, told to the caller each time it changes.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Live {
+    /// waiting, sending, receiving, placing, done
+    pub state: String,
+    /// The step in words: what it waits for, or how it went.
+    pub note: String,
+    pub bytes: u64,
+    pub items_done: usize,
+    pub items: usize,
+    /// The item's name moving now.
+    pub current: String,
+    /// Receiver: the transfer folder (GOAL.md is in it) once things are in place, and how that went.
+    pub dir: Option<PathBuf>,
+    pub placed: usize,
+    pub problems: usize,
+    pub missing: usize,
+}
+
+const POLL: Duration = if cfg!(test) { Duration::from_millis(40) } else { Duration::from_secs(5) };
+
+fn step(state: &str, note: String) -> Live {
+    Live { state: state.into(), note, ..Live::default() }
+}
+
+/// Polls `f` every 5 s, for up to an hour, until it gives something; GitHub doesn't count the unchanged answers.
+pub fn wait<T>(what: String, on: &impl Fn(&Live), mut f: impl FnMut() -> Result<Option<T>, String>) -> Result<T, String> {
+    on(&step("waiting", format!("{what}…")));
+    let start = Instant::now();
+    loop {
+        if let Some(t) = f()? {
+            return Ok(t);
+        }
+        if start.elapsed() > Duration::from_secs(3600) {
+            return Err(format!("gave up: {what}"));
+        }
+        std::thread::sleep(POLL);
+    }
+}
+
+/// The sender's side of the approved transfer `t`: offers what `choose` keeps of this device's items (None stops
+/// here), waits for the picks and sends them straight to the receiver.
+pub fn send(b: &Bus, secret: &[u8; 32], t: &str, to: &Device, here: &Env, choose: impl FnOnce(Offer) -> Option<Offer>, on: impl Fn(&Live)) -> Result<(), String> {
+    let key = to.key_bytes().ok_or("the other device has no key on the bus")?;
+    let offer = choose(offer(here)).ok_or("cancelled")?;
+    on(&step("waiting", format!("offering {} items", offer.items.len())));
+    put_sealed(b, &format!("{t}/offer.sealed"), &key, &offer, "offer")?;
+    update_session(b, t, |s| s.state = "picking".into())?;
+    let picks: Picks = wait(format!("waiting for {} to pick", to.name), &on, || get_sealed(b, &format!("{t}/picks.sealed"), secret))?;
+    let items: Vec<Item> = offer.items.into_iter().filter(|i| picks.ids.contains(&i.id)).collect();
+    let n = items.len();
+    on(&step("waiting", format!("{} picked {n} items", to.name)));
+    let (listener, port) = wire::listen().map_err(|e| e.to_string())?;
+    let stream_key = seal::random::<32>();
+    let mut addrs = wire::addresses();
+    if cfg!(test) {
+        addrs.push("127.0.0.1".into());
+    }
+    put_sealed(b, &format!("{t}/key.sealed"), &key, &Endpoint { key: stream_key.to_vec(), port, addrs }, "stream key")?;
+    update_session(b, t, |s| s.state = "sending".into())?;
+    let p = wire::serve(listener, stream_key, items, here, |p| on(&Live { state: "sending".into(), bytes: p.bytes, items_done: p.items_done, items: n, current: p.current.clone(), ..Live::default() }))?;
+    update_session(b, t, |s| s.state = "done".into())?;
+    on(&Live { state: "done".into(), note: "done".into(), bytes: p.bytes, items_done: p.items_done, items: n, ..Live::default() });
+    Ok(())
+}
+
+/// The receiver's side of the approved transfer `t`: takes the offer, sends back what `choose` picks of it (None
+/// stops here), fetches those from the sender, asking again after a cut, and puts them in place with the brief.
+/// Returns the transfer folder, where GOAL.md is.
+pub fn receive(b: &Bus, secret: &[u8; 32], t: &str, from: &Device, here: &Env, choose: impl FnOnce(&Offer) -> Option<Picks>, on: impl Fn(&Live)) -> Result<PathBuf, String> {
+    let key = from.key_bytes().ok_or("the other device has no key on the bus")?;
+    let offer: Offer = wait(format!("waiting for {} to offer", from.name), &on, || get_sealed(b, &format!("{t}/offer.sealed"), secret))?;
+    let picks = choose(&offer).ok_or("cancelled")?;
+    let n = picks.ids.len();
+    on(&step("waiting", format!("taking {n} of {} offered items (from {})", offer.items.len(), offer.os)));
+    put_sealed(b, &format!("{t}/picks.sealed"), &key, &picks, "picks")?;
+    let ep: Endpoint = wait(format!("waiting for {} to start sending", from.name), &on, || get_sealed(b, &format!("{t}/key.sealed"), secret))?;
+    let dir = local_dir(here, t);
+    let staging = dir.join("staging");
+    let name = |id: &str| offer.items.iter().find(|i| i.id == id).map(|i| i.name.clone()).unwrap_or_else(|| id.into());
+    let arrived = |id: &String| staging.join(format!("{}.done", wire::safe(id))).exists();
+    let mut bytes = 0;
+    // A cut connection: ask again for what hasn't arrived, up to 20 times.
+    for _ in 0..20 {
+        let need: Vec<String> = picks.ids.iter().filter(|id| !arrived(id)).cloned().collect();
+        if need.is_empty() {
+            break;
+        }
+        let (base, had, got) = (bytes, n - need.len(), Cell::new(0));
+        let r = wire::fetch(&ep, need, &staging, |p| {
+            got.set(p.bytes);
+            on(&Live { state: "receiving".into(), bytes: base + p.bytes, items_done: had + p.items_done, items: n, current: name(&p.current), ..Live::default() });
+        });
+        bytes += got.get();
+        if let Err(e) = r {
+            on(&Live { state: "receiving".into(), note: format!("{e}; trying again"), bytes, items_done: n - picks.ids.iter().filter(|id| !arrived(id)).count(), items: n, ..Live::default() });
+            std::thread::sleep(POLL);
+        }
+    }
+    let missing = picks.ids.iter().filter(|id| !arrived(id)).count();
+    // Tell the sender it can stop.
+    let _ = wire::fetch(&ep, vec![], &staging, |_| {});
+    on(&Live { state: "placing".into(), note: "putting things in place".into(), bytes, items_done: n - missing, items: n, ..Live::default() });
+    let (placed, problems) = finish(&offer, &picks, here, &from.name, &dir);
+    let note = format!("placed {placed} paths, {problems} problems, {missing} items missing; the brief is {}", dir.join("GOAL.md").display());
+    on(&Live { state: "done".into(), note, bytes, items_done: n - missing, items: n, current: String::new(), dir: Some(dir.clone()), placed, problems, missing });
+    Ok(dir)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -146,5 +286,71 @@ mod tests {
         assert_eq!(picks(&o, Os::Linux, &["files/documents".into()]).ids, ["files/documents/notes-2026"]);
         let g = brief(&o, &env(Os::Windows, r"C:\Users\ege"), "Ege's MacBook", &[]);
         assert!(g.contains("`/Users/ege` on macOS") && g.contains(r"`C:\Users\ege` on Windows"));
+    }
+
+    #[test]
+    fn items_group_by_the_first_part_of_their_id_in_a_fixed_order() {
+        let item = |id: &str| Item { id: id.into(), name: id.into(), mac: vec![], win: vec![], linux: vec![], secret: false, note: String::new(), run: vec![] };
+        let items: Vec<Item> = ["files/documents/a", "tools/brew", "zeta/x", "dev/git", "files/desktop/b", "ai/codex", "alpha/y"].map(item).into();
+        let got: Vec<(String, Vec<String>)> = groups(&items).into_iter().map(|(g, v)| (g, v.iter().map(|i| i.id.clone()).collect())).collect();
+        let want: Vec<(String, Vec<String>)> = [("dev", vec!["dev/git"]), ("ai", vec!["ai/codex"]), ("tools", vec!["tools/brew"]), ("files", vec!["files/documents/a", "files/desktop/b"]),
+            ("zeta", vec!["zeta/x"]), ("alpha", vec!["alpha/y"])].into_iter().map(|(g, v)| (g.to_string(), v.into_iter().map(String::from).collect())).collect();
+        assert_eq!(got, want);
+        assert!(groups(&[]).is_empty());
+    }
+
+    /// The routines the command line and the window share, end to end: a Mac-shaped home sends to a Linux-shaped
+    /// one through a folder in place of GitHub and a stream over this machine, both telling their progress.
+    #[test]
+    fn send_and_receive_meet_through_the_bus() {
+        let base = std::env::temp_dir().join(format!("anysync-session-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        let (a, b) = (base.join("mac"), base.join("linux"));
+        std::fs::create_dir_all(a.join("Documents/proj")).unwrap();
+        std::fs::write(a.join("Documents/proj/main.rs"), b"fn main() {}").unwrap();
+        std::fs::write(a.join(".gitconfig"), b"[user]\n\tname = ege\n").unwrap();
+        std::fs::write(a.join(".zshrc"), b"export X=1\n").unwrap();
+        std::fs::create_dir_all(&b).unwrap();
+        let mac = env(Os::Mac, &a.display().to_string());
+        let linux = env(Os::Linux, &b.display().to_string());
+
+        let bus = Bus::folder(&base.join("bus"));
+        let (sa, sb) = (seal::random::<32>(), seal::random::<32>());
+        let dev = |id: &str, name: &str, s: &[u8; 32]| Device { id: id.into(), name: name.into(), key: bus::b64(&seal::public(s)), ..Device::default() };
+        let (da, db) = (dev("aaaa", "Old Mac", &sa), dev("bbbb", "New Linux", &sb));
+        let r = Request { ask: bus::Ask::Send, from: "aaaa".into(), to: "bbbb".into(), at: bus::now(), answer: Answer::Pending, transfer: String::new() };
+        bus.put_json(&r.path(), &r, None, "").unwrap();
+        let r = approve(&bus, r, "", &Default::default(), true).unwrap();
+        let t = r.transfer.clone();
+
+        let (sent, got) = (std::sync::Mutex::new(Vec::<Live>::new()), std::sync::Mutex::new(Vec::<Live>::new()));
+        let dir = std::thread::scope(|sc| {
+            let sender = sc.spawn(|| send(&bus, &sa, &t, &db, &mac, |mut o| {
+                // Lists run real commands (brew, cargo); this test is about the files.
+                o.items.retain(|i| !i.id.starts_with("tools/"));
+                Some(o)
+            }, |l| sent.lock().unwrap().push(l.clone())));
+            let dir = receive(&bus, &sb, &t, &da, &linux, |o| {
+                assert_eq!(o.items.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(), ["dev/git", "shell/zsh", "files/documents/proj"]);
+                Some(picks(o, Os::Linux, &["dev".into(), "files".into()]))
+            }, |l| got.lock().unwrap().push(l.clone()));
+            sender.join().unwrap().unwrap();
+            dir.unwrap()
+        });
+        let (sent, got) = (sent.into_inner().unwrap(), got.into_inner().unwrap());
+
+        assert_eq!(std::fs::read(b.join(".gitconfig")).unwrap(), b"[user]\n\tname = ege\n");
+        assert!(b.join("Documents/proj/main.rs").exists());
+        assert!(!b.join(".zshrc").exists(), "only the picks travel");
+        assert!(std::fs::read_to_string(dir.join("GOAL.md")).unwrap().contains("Git config"));
+        let (s, g) = (sent.last().unwrap(), got.last().unwrap());
+        assert_eq!((s.state.as_str(), s.items_done, s.items), ("done", 2, 2));
+        assert_eq!((g.state.as_str(), g.items_done, g.items, g.missing, g.placed), ("done", 2, 2, 0, 2));
+        assert_eq!(g.dir.as_deref(), Some(dir.as_path()));
+        assert!(g.bytes > 0 && g.bytes == s.bytes, "{} and {}", g.bytes, s.bytes);
+        assert!(sent.iter().any(|l| l.state == "sending") && got.iter().any(|l| l.state == "receiving" && l.current == "Git config"), "progress is told on the way");
+        assert!(got.iter().any(|l| l.note.starts_with("waiting for Old Mac to offer")));
+        assert_eq!(bus.get_json::<Session>(&format!("{t}/session.json")).unwrap().unwrap().0.state, "done");
+        let _ = std::fs::remove_dir_all(&base);
     }
 }

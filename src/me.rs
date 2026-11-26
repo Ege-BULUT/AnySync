@@ -19,7 +19,7 @@ pub fn dir() -> PathBuf {
     PathBuf::from(env.resolve(t).unwrap_or_default())
 }
 
-/// How the device is drawn: a Mac model, a Windows desktop or laptop, a Linux distro's logo.
+/// How the device is drawn: a Mac model, a Windows desktop or laptop, a Linux one with its distro's name.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct Look {
@@ -116,6 +116,14 @@ pub fn keys() -> ([u8; 32], [u8; 32]) {
         }
     };
     (secret, seal::public(&secret))
+}
+
+/// This device's record on the bus: who it is, the system it runs, its look and its public key.
+pub fn device(cfg: &Config) -> crate::bus::Device {
+    let (_, public) = keys();
+    let user = std::env::var("USER").or_else(|_| std::env::var("USERNAME")).unwrap_or_default();
+    crate::bus::Device { id: cfg.id.clone(), name: cfg.name.clone(), os: Os::current().name().into(), look: cfg.look.clone(), key: crate::bus::b64(&public), user,
+        seen: crate::bus::now(), version: env!("CARGO_PKG_VERSION").into(), ..Default::default() }
 }
 
 /// ANYSYNC_TOKEN, else the GitHub CLI's.
