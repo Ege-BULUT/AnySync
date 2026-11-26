@@ -7,6 +7,14 @@ description = "Move your working setup between macOS, Windows and Linux: one sid
 repository = "https://github.com/Ege-BULUT/AnySync"
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+crypto_box = { version = "0.9", features = ["seal", "chacha20"] }
+chacha20poly1305 = { version = "0.10", features = ["stream"] }
+tar = "0.4"
 
 [profile.dev]
 debug = 0
+
+[profile.dev.package."*"]
+opt-level = 2

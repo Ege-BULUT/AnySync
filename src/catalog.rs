@@ -31,6 +31,58 @@ impl Entry {
     }
 }
 
+/// An item as offered: owned, with its templates for every system, so the receiver places it by the offer itself
+/// even when its own catalogue is older or newer.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct Item {
+    pub id: String,
+    pub name: String,
+    pub mac: Vec<String>,
+    pub win: Vec<String>,
+    pub linux: Vec<String>,
+    #[serde(default)]
+    pub secret: bool,
+    #[serde(default)]
+    pub note: String,
+}
+
+impl Item {
+    pub fn templates(&self, os: Os) -> &[String] {
+        match os {
+            Os::Mac => &self.mac,
+            Os::Windows => &self.win,
+            Os::Linux => &self.linux,
+        }
+    }
+
+    /// One top-level file or folder of the person's `folder` (`files/documents`), by name.
+    pub fn folder_child(folder: &str, name: &str) -> Option<Item> {
+        let (_, mac, win, linux) = FOLDERS.iter().find(|f| f.0 == folder)?;
+        let t = |root: &str| vec![format!("{root}/{name}")];
+        Some(Item { id: format!("{folder}/{}", slug(name)), name: name.into(), mac: t(mac), win: t(win), linux: t(linux), secret: false, note: String::new() })
+    }
+}
+
+impl From<&Entry> for Item {
+    fn from(e: &Entry) -> Item {
+        let own = |l: &[&str]| l.iter().map(|s| s.to_string()).collect();
+        Item { id: e.id.into(), name: e.name.into(), mac: own(e.mac), win: own(e.win), linux: own(e.linux), secret: e.secret, note: e.note.into() }
+    }
+}
+
+/// A name as an id part: lowercase letters, digits and dashes.
+pub fn slug(s: &str) -> String {
+    let mut out = String::new();
+    for c in s.to_lowercase().chars() {
+        if c.is_ascii_alphanumeric() {
+            out.push(c);
+        } else if !out.ends_with('-') && !out.is_empty() {
+            out.push('-');
+        }
+    }
+    out.trim_end_matches('-').to_string()
+}
+
 const fn e(id: &'static str, name: &'static str, mac: &'static [&'static str], win: &'static [&'static str], linux: &'static [&'static str], note: &'static str) -> Entry {
     Entry { id, name, mac, win, linux, secret: false, note }
 }

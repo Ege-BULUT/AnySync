@@ -1,5 +1,7 @@
 mod catalog;
 mod os;
+mod seal;
+mod wire;
 
 use std::path::Path;
 
