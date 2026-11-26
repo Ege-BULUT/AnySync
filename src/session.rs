@@ -11,7 +11,7 @@ use crate::catalog::{CATALOG, FOLDERS, Item};
 use crate::os::{Env, Os};
 use crate::{seal, wire};
 
-/// What the sender offers: its system and home folder (for the brief's path rewrites) and the items it has.
+/// What the sender offers: its system (`macOS`, `Windows`, `Linux`) and home folder (for the brief's path rewrites) and the items it has.
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct Offer {
     pub os: String,
@@ -25,14 +25,6 @@ pub struct Picks {
     pub ids: Vec<String>,
 }
 
-pub fn os_id(os: Os) -> &'static str {
-    match os {
-        Os::Mac => "mac",
-        Os::Windows => "windows",
-        Os::Linux => "linux",
-    }
-}
-
 /// Everything this device could send: the catalogue's items found here, and each top-level file or folder of the
 /// person's own folders (hidden ones left out).
 pub fn offer(env: &Env) -> Offer {
@@ -44,7 +36,7 @@ pub fn offer(env: &Env) -> Offer {
         kids.sort();
         items.extend(kids.iter().filter_map(|k| Item::folder_child(id, k)));
     }
-    Offer { os: os_id(env.os).into(), home: env.home.clone(), items }
+    Offer { os: env.os.name().into(), home: env.home.clone(), items }
 }
 
 /// Whether `item` has a place on `os`.
@@ -103,7 +95,7 @@ pub fn local_dir(env: &Env, transfer: &str) -> PathBuf {
 /// GOAL.md for the agent finishing the setup: what landed where, what didn't, and what to rewrite.
 pub fn brief(offer: &Offer, here: &Env, from: &str, placed: &[(Item, Vec<String>, Vec<String>)]) -> String {
     let mut g = format!("# GOAL: make this {} device work like {from} ({})\n\n", here.os.name(), offer.os);
-    if offer.home != here.home || offer.os != os_id(here.os) {
+    if offer.home != here.home || offer.os != here.os.name() {
         g += &format!("The old home folder was `{}` on {}, this one is `{}` on {}. Configs that name the old home or its paths need this device's \
             (separators too when the systems differ); keep a copy of each file before changing it.\n\n", offer.home, offer.os, here.home, here.os.name());
     }
@@ -147,11 +139,11 @@ mod tests {
         let zsh = Item::from(CATALOG.iter().find(|e| e.id == "shell/zsh").unwrap());
         let vscode = Item::from(CATALOG.iter().find(|e| e.id == "editors/vscode").unwrap());
         let doc = Item::folder_child("files/documents", "Notes 2026").unwrap();
-        let o = Offer { os: "mac".into(), home: mac.home.clone(), items: vec![zsh, vscode, doc] };
+        let o = Offer { os: "macOS".into(), home: mac.home.clone(), items: vec![zsh, vscode, doc] };
         assert_eq!(picks(&o, Os::Windows, &[]).ids, ["editors/vscode", "files/documents/notes-2026"]);
         assert_eq!(picks(&o, Os::Linux, &["shell".into()]).ids, ["shell/zsh"]);
         assert_eq!(picks(&o, Os::Linux, &["files/documents".into()]).ids, ["files/documents/notes-2026"]);
         let g = brief(&o, &env(Os::Windows, r"C:\Users\ege"), "Ege's MacBook", &[]);
-        assert!(g.contains("`/Users/ege` on mac") && g.contains(r"`C:\Users\ege` on Windows"));
+        assert!(g.contains("`/Users/ege` on macOS") && g.contains(r"`C:\Users\ege` on Windows"));
     }
 }
