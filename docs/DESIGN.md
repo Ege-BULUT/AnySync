@@ -69,9 +69,11 @@ keychain or credential store as a whole, and anything tied to the machine's iden
 
 ## Devices
 
-Each device registers with an id, a name the person can change and a look: a MacBook or iMac drawing for a Mac, a
-desktop tower or laptop for Windows, and the distro's own logo (transparent background) for Linux. The device
-running the app is always on the left, the other on the right; the lines run from sender to receiver.
+Each device registers with an id, a name the person can change, the system it runs and a look. The look is drawing
+only, all original shapes and no company logos: MacySync's MacBook drawings for a Mac laptop (a plain monitor for a
+Mac desktop), a monitor or a laptop for Windows, and a laptop or a monitor with the distro's name on a small badge for
+Linux. The picker mixes the three systems' types. The device running the app is always on the left, the other on the
+right; the lines run from sender to receiver.
 
 ## Plan
 

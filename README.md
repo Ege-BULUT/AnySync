@@ -9,7 +9,8 @@ machine.
 AnySync is the cross-platform member of a family: [MacySync](https://macysync.vercel.app) (Mac to Mac), WindySync
 (Windows to Windows) and LinySync (Linux to Linux) go deeper between machines of the same kind.
 
-Status: design. See [docs/DESIGN.md](docs/DESIGN.md).
+Status: early. `anysync` opens the window; `anysync --scan`, `--give <id>`, `--accept` and `--id` do the same from a
+terminal. See [docs/DESIGN.md](docs/DESIGN.md).
 
 ## License
 
