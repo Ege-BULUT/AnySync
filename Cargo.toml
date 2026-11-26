@@ -1,0 +1,12 @@
+[package]
+name = "anysync"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Move your working setup between macOS, Windows and Linux: one side offers, the other picks, an AI agent sets it up."
+repository = "https://github.com/Ege-BULUT/AnySync"
+
+[dependencies]
+
+[profile.dev]
+debug = 0
