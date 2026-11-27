@@ -1,7 +1,9 @@
-//! The window: borderless and see-through, shaped as three lobes that meet in the middle, one for each system: this
-//! device on the left, the other on the right with its card, the panel below. Send, Receive and the name sit where
-//! they meet, and the background lines cross there. Each device is drawn in its own look (any of the three
-//! systems). While files move, the lines run from the sender to the receiver.
+//! The window: borderless and see-through, a symmetric angular frame (a visor over the two devices, bevelled top
+//! corners, a raised crown for the name, long diagonals closing in on the panel). This device is on the left, the
+//! other on the right with its card, the panel below. The background lines are a vortex: they come in from past the
+//! edges, join as they fall and curl into a hole in the open middle. While this device sends, the lights run in from
+//! the edges into the hole; while it receives, out of the hole to the edges. Each device is drawn in its own look
+//! (any of the three systems).
 //!
 //! The bus is read every 5 s on a thread. A transfer runs the command line's own `session::send` or
 //! `session::receive` on a thread of its own: it takes the person's ticks from 03 PICK and shows its progress in
@@ -53,7 +55,7 @@ struct Layout {
     sharp: bool,
     elements: Elements,
     conduit: [[f32; 2]; 4],
-    flow: FlowGuide,
+    vortex: Vortex,
 }
 
 #[derive(serde::Deserialize, Clone, Copy, Debug)]
@@ -78,21 +80,14 @@ struct Elements {
     actions: Rect,
 }
 
+/// The vortex the background lines fall into: its centre, how flat it lies (a disc seen at an angle: the vertical
+/// squash) and how far, in radians, the lines turn as they fall.
 #[derive(serde::Deserialize, Clone, Copy)]
-struct Band {
+struct Vortex {
+    x: f32,
     y: f32,
-    spread: f32,
-}
-
-/// The background lines: where they fan out on the left, squeeze through the middle and fan out on the right (a
-/// negative spread crosses them over), and the x ranges where they bend from one band to the next.
-#[derive(serde::Deserialize, Clone, Copy)]
-struct FlowGuide {
-    left: Band,
-    bridge: Band,
-    right: Band,
-    into_bridge: [f32; 2],
-    into_right: [f32; 2],
+    squash: f32,
+    spin: f32,
 }
 
 fn layout() -> &'static Layout {
@@ -641,14 +636,23 @@ fn depth(poly: &[[f32; 2]], p: [f32; 2]) -> f32 {
     if inside { d } else { -d }
 }
 
-const LINES: usize = 15;
-const SAMPLES: usize = 200;
+const RAYS: usize = 32;
+const SAMPLES: usize = 160;
+/// How far a line has fallen (0 beyond the outline, near the viewer; 1 at the centre) when neighbours join: pairs at
+/// the first, fours at the second, eights at the third. The four lines left end at the hole's rim.
+const JOIN: [f32; 3] = [0.3, 0.52, 0.72];
+const RIM: f32 = 0.92;
+/// The radius the lines start at, before the squash: past every corner of the window.
+const REACH: f32 = 940.0;
 
-/// A sampled curve from one lobe to the other, and how deep inside the body each sample is (Rune has no clipping,
-/// so the lines are cut and faded by this).
-struct FlowLine {
+/// A line of the vortex, sampled from beyond the outline to where it joins another or falls into the hole (Rune has
+/// no clipping, so the lines are cut and faded by depth): `inside` where it is clear of the outline and the title
+/// row, and `clear`, how far each sample is from those and from the panels and buttons, which the moving lights keep
+/// off.
+struct Ray {
     pts: Vec<[f32; 2]>,
-    depth: Vec<f32>,
+    t: Vec<f32>,
+    clear: Vec<f32>,
     inside: Vec<std::ops::Range<usize>>,
     offset: f32,
     len: f32,
@@ -663,55 +667,88 @@ fn hash(n: u32) -> f32 {
     (x & 0xFFFF) as f32 / 65535.0
 }
 
-fn flow_lines() -> &'static [FlowLine] {
-    static L: OnceLock<Vec<FlowLine>> = OnceLock::new();
+/// Where line `i` is when it has fallen `t` of the way: it comes in straight, joins its neighbours, and turns ever
+/// faster as it nears the centre; the radius shrinks as a perspective does.
+fn vortex_point(i: usize, t: f32) -> [f32; 2] {
+    let v = layout().vortex;
+    let start = |i: usize| (i as f32 + 0.5 * hash(i as u32 * 29 + 7) - 0.25) * std::f32::consts::TAU / RAYS as f32;
+    let (mut a, mut prev) = (start(i), start(i));
+    for (k, join) in JOIN.iter().enumerate() {
+        let size = 2usize << k;
+        let first = i / size * size;
+        let centre = (first..first + size).map(start).sum::<f32>() / size as f32;
+        let s = ((t - (join - 0.2)) / 0.2).clamp(0.0, 1.0);
+        a += s * s * (3.0 - 2.0 * s) * (centre - prev);
+        prev = centre;
+    }
+    a += v.spin * t * t;
+    let r = REACH * (1.0 - t).powf(1.5);
+    [v.x + r * a.cos(), v.y + r * a.sin() * v.squash]
+}
+
+fn rays() -> &'static [Ray] {
+    static L: OnceLock<Vec<Ray>> = OnceLock::new();
     L.get_or_init(|| {
         let poly: Vec<[f32; 2]> = segments().into_iter().flat_map(|s| (1..=16).map(move |i| bezier(s, i as f32 / 16.0))).collect();
-        (0..LINES)
+        let e = &layout().elements;
+        let away = |rects: &[Rect], p: [f32; 2]| {
+            rects.iter().map(|r| (r.x - p[0]).max(p[0] - r.x - r.w).max(0.0).hypot((r.y - p[1]).max(p[1] - r.y - r.h).max(0.0)) - 10.0).fold(f32::MAX, f32::min)
+        };
+        (0..RAYS)
             .map(|i| {
-                let o = -1.0 + 2.0 * i as f32 / (LINES - 1) as f32;
-                // They fan out on each side and squeeze through the middle.
-                let f = layout().flow;
-                let (yl, yb, yr) = (f.left.y + o * f.left.spread, f.bridge.y + o * f.bridge.spread, f.right.y + o * f.right.spread);
-                let wobble = if layout().sharp { 0.0 } else { 4.0 + 6.0 * hash(i as u32 * 7 + 1) };
-                let shift = hash(i as u32 * 13 + 5) * std::f32::consts::TAU;
-                let pts: Vec<[f32; 2]> = (0..SAMPLES)
-                    .map(|j| {
-                        let x = -20.0 + 1320.0 * j as f32 / (SAMPLES - 1) as f32;
-                        // How far the line has moved by `dy` over the range: smoothly, or at 45° in its middle as a
-                        // circuit trace bends.
-                        let bend = |[a, b]: [f32; 2], dy: f32| {
-                            if layout().sharp {
-                                dy * ((x - (a + b) / 2.0) / dy.abs().max(1.0) + 0.5).clamp(0.0, 1.0)
-                            } else {
-                                let t = ((x - a) / (b - a)).clamp(0.0, 1.0);
-                                dy * t * t * (3.0 - 2.0 * t)
-                            }
-                        };
-                        let y = yl + bend(f.into_bridge, yb - yl) + bend(f.into_right, yr - yb) + wobble * (x / 160.0 + shift).sin();
-                        [x, y]
-                    })
-                    .collect();
-                let depth: Vec<f32> = pts.iter().map(|p| depth(&poly, *p)).collect();
-                let mut inside = Vec::new();
-                let mut from = None;
-                for (j, d) in depth.iter().chain([&-1.0]).enumerate() {
-                    match (from, *d > 6.0) {
-                        (None, true) => from = Some(j),
-                        (Some(a), false) => {
-                            if j - a > 1 {
-                                inside.push(a..j);
-                            }
-                            from = None;
-                        }
-                        _ => {}
-                    }
-                }
-                let (offset, len) = (hash(i as u32 * 61 + 9), 0.03 + 0.024 * hash(i as u32 * 17 + 3));
-                FlowLine { pts, depth, inside, offset, len, speed: if i % 3 == 0 { 2.0 } else { 1.0 } }
+                // A line ends where it joins the one it merges into, or at the rim.
+                let end = JOIN.get(i.trailing_zeros() as usize).copied().unwrap_or(RIM);
+                let n = (SAMPLES as f32 * end) as usize;
+                let t: Vec<f32> = (0..n).map(|j| end * j as f32 / (n - 1) as f32).collect();
+                let pts: Vec<[f32; 2]> = t.iter().map(|t| vortex_point(i, *t)).collect();
+                let edge: Vec<f32> = pts.iter().map(|p| depth(&poly, *p).min(away(&[e.title, e.controls], *p))).collect();
+                let clear = pts.iter().zip(&edge).map(|(p, d)| d.min(away(&[e.actions, e.left_panel, e.right_panel], *p))).collect();
+                let inside = runs(&edge);
+                let (offset, len) = (hash(i as u32 * 61 + 9), 0.05 + 0.03 * hash(i as u32 * 17 + 3));
+                Ray { pts, t, clear, inside, offset, len, speed: if i % 3 == 0 { 1.4 } else { 1.0 } }
             })
             .collect()
     })
+}
+
+/// The runs of samples more than 6 px inside: where a line may be drawn.
+fn runs(depth: &[f32]) -> Vec<std::ops::Range<usize>> {
+    let (mut out, mut from) = (Vec::new(), None);
+    for (j, d) in depth.iter().chain([&-1.0]).enumerate() {
+        match (from, *d > 6.0) {
+            (None, true) => from = Some(j),
+            (Some(a), false) => {
+                if j - a > 1 {
+                    out.push(a..j);
+                }
+                from = None;
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+/// The vortex's depth rings, closer together as they near the hole, cut where they leave the body.
+fn rings() -> &'static [Vec<[f32; 2]>] {
+    static R: OnceLock<Vec<Vec<[f32; 2]>>> = OnceLock::new();
+    R.get_or_init(|| {
+        let poly: Vec<[f32; 2]> = segments().into_iter().flat_map(|s| (1..=16).map(move |i| bezier(s, i as f32 / 16.0))).collect();
+        [0.45, 0.62, 0.74, 0.83, 0.89]
+            .iter()
+            .flat_map(|t: &f32| {
+                let ring = vortex_ring(REACH * (1.0 - t).powf(1.5));
+                let d: Vec<f32> = ring.iter().map(|p| depth(&poly, *p)).collect();
+                runs(&d).into_iter().map(move |r| ring[r].to_vec()).collect::<Vec<_>>()
+            })
+            .collect()
+    })
+}
+
+/// An ellipse of the vortex's squash around its centre.
+fn vortex_ring(r: f32) -> Vec<[f32; 2]> {
+    let v = layout().vortex;
+    (0..=72).map(|k| k as f32 * std::f32::consts::TAU / 72.0).map(|a| [v.x + r * a.cos(), v.y + r * a.sin() * v.squash]).collect()
 }
 
 fn backdrop(s: &S) -> Vec<El> {
@@ -719,35 +756,58 @@ fn backdrop(s: &S) -> Vec<El> {
     let body = body_path();
     let mut out = vec![full(Shape::new().fill_path(&body, BG)).window_drag().key("body")];
     let (mut faint, mut glow, mut core) = (Shape::new(), Shape::new(), Shape::new());
-    for (i, l) in flow_lines().iter().enumerate() {
+    for (i, l) in rays().iter().enumerate() {
         // Violet, with a magenta and a teal thread: the logo's crossing lines.
         let tint = match i % 5 {
             1 => ACCENT2,
             3 => ACCENT3,
             _ => ACCENT,
         };
+        // Near the viewer a line is wide and bright; it thins and dims as it falls in.
         for r in &l.inside {
-            faint = faint.stroke(l.pts[r.clone()].to_vec(), 1.0, Color { a: 0.07 + 0.06 * env, ..tint });
+            for a in r.clone().step_by(6) {
+                let b = (a + 7).min(r.end);
+                if b > a + 1 {
+                    let near = 1.0 - l.t[(a + b) / 2];
+                    faint = faint.stroke(l.pts[a..b].to_vec(), 0.5 + 1.8 * near * near, Color { a: (0.17 + 0.12 * env) * near.sqrt(), ..tint });
+                }
+            }
         }
+        // The moving lights: from the edges into the hole while this device sends, out of it while it receives.
+        let n = l.pts.len();
         for j in 0..DASHES {
             let u = (l.offset + j as f32 / DASHES as f32 + l.speed * s.flow.pos).rem_euclid(1.0);
-            let last = (SAMPLES - 1) as f32;
-            let (a, b) = ((u * last) as usize, (((u + l.len) * last) as usize).min(SAMPLES - 1));
+            let last = (n - 1) as f32;
+            let (a, b) = ((u * last) as usize, (((u + l.len) * last) as usize).min(n - 1));
             if b <= a + 1 {
                 continue;
             }
-            let fade = ((l.depth[a..=b].iter().copied().fold(f32::MAX, f32::min) - 2.0) / 28.0).clamp(0.0, 1.0);
+            // The glow's blur has to end inside the body: over the see-through desktop it comes out as a bright
+            // blob. Near the edge only the thin core is drawn.
+            let gap = l.clear[a..=b].iter().copied().fold(f32::MAX, f32::min);
+            let (fade, glow_fade) = (((gap - 6.0) / 20.0).clamp(0.0, 1.0), ((gap - 26.0) / 24.0).clamp(0.0, 1.0));
+            let near = 1.0 - l.t[(a + b) / 2];
             if fade == 0.0 {
                 continue;
             }
             let pts = l.pts[a..=b].to_vec();
-            glow = glow.stroke(pts.clone(), 7.0, Color { a: (0.16 + 0.5 * env) * fade, ..tint });
-            core = core.stroke(pts, 1.6, Color { a: (0.36 + 0.55 * env) * fade, ..tint });
+            if glow_fade > 0.0 {
+                glow = glow.stroke(pts.clone(), 2.0 + 7.0 * near, Color { a: (0.14 + 0.5 * env) * glow_fade * near.sqrt(), ..tint });
+            }
+            core = core.stroke(pts, 0.6 + 1.6 * near, Color { a: (0.36 + 0.55 * env) * fade * near.sqrt(), ..tint });
         }
     }
+    let rings = rings().iter().fold(Shape::new(), |sh, r| sh.stroke(r.clone(), 0.8, Color { a: 0.04 + 0.04 * env, ..STEEL }));
+    out.push(full(rings).key("rings"));
     out.push(full(faint).key("faint"));
     out.push(full(glow).blur(6.0).key("glow"));
     out.push(full(core).blur(0.6).key("core"));
+    // The hole: black, in a haze of light, with a thin bright rim.
+    out.push(full(Shape::new().stroke(vortex_ring(34.0), 14.0, Color { a: 0.16 + 0.3 * env, ..ACCENT })).blur(9.0).key("haze"));
+    let hole = vortex_ring(21.0);
+    let hole_path = hole[1..].iter().fold(Path::new().move_to(hole[0]), |p, q| p.line_to(*q)).close();
+    out.push(full(Shape::new().fill_path(&hole_path, Color { r: 0.0, g: 0.0, b: 0.002, a: 1.0 })).key("hole"));
+    out.push(full(Shape::new().stroke(vortex_ring(23.0), 1.6, Color { a: 0.45 + 0.45 * env, ..LIGHT })).blur(0.8).key("rim"));
     out.push(full(Shape::new().stroke_path(&body, 2.0, LineCap::Round, EDGE)).key("edge"));
     // The outline lights up violet while files move. No blurred glow: Rune's blur over the transparent desktop
     // outside the body comes out as a hard, oversaturated band.
