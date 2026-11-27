@@ -39,7 +39,11 @@ fn connect() -> Result<Ctx, String> {
 }
 
 fn device(b: &Bus, id: &str) -> Result<Device, String> {
-    b.get_json::<Device>(&format!("devices/{id}.json"))?.map(|d| d.0).ok_or(format!("no device #{id} on the bus"))
+    let d = b.get_json::<Device>(&format!("devices/{id}.json"))?.map(|d| d.0).ok_or(format!("no device #{id} on the bus"))?;
+    if !crate::look::ours(&d) {
+        return Err(format!("#{id} runs {}, which this app doesn't move to or from", if d.os.is_empty() { &d.look.os } else { &d.os }));
+    }
+    Ok(d)
 }
 
 /// Prints each step once; while files move, a line per item rather than per few bytes.

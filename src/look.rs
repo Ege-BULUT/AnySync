@@ -91,6 +91,11 @@ pub const CHASSIS: [(&str, &str); 4] = [("Graphite", "#3b3e45"), ("Black", "#171
 /// os-release ids, shown as they are.
 pub const DISTROS: [&str; 10] = ["ubuntu", "fedora", "debian", "arch", "linuxmint", "pop", "opensuse-tumbleweed", "manjaro", "nixos", "elementary"];
 
+/// Whether `d` runs one of the systems in SYSTEMS, by what it reports or else by its look.
+pub fn ours(d: &crate::bus::Device) -> bool {
+    Os::parse(&d.os).or(Os::parse(&d.look.os)).is_some_and(|o| SYSTEMS.iter().any(|s| s.0 == os_key(o)))
+}
+
 /// The look's system key for `os`.
 pub fn os_key(os: Os) -> &'static str {
     match os {
@@ -129,7 +134,8 @@ pub fn models(look: &Look) -> Vec<(String, String)> {
 /// model the system has, and one of its colours. A change in the picker goes through here, so switching
 /// systems always lands on a look that can be drawn.
 pub fn fix(look: &Look) -> Look {
-    let os = if SYSTEMS.iter().any(|s| s.0 == look.os) { look.os.clone() } else { os_key(Os::current()).into() };
+    let known = |o: &str| SYSTEMS.iter().any(|s| s.0 == o);
+    let os = [look.os.as_str(), os_key(Os::current())].into_iter().find(|o| known(o)).unwrap_or(SYSTEMS[0].0).to_string();
     let kind = if KINDS.contains(&look.kind.as_str()) { look.kind.clone() } else { "laptop".into() };
     let model = match (os.as_str(), kind.as_str()) {
         ("mac", "laptop") => mac_model(&look.model).id.clone(),

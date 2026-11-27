@@ -23,18 +23,20 @@ use crate::me::{self, Config, Look};
 use crate::os::{Env, Os};
 use crate::session::{self, Live, Picks};
 
-// AnySync's site palette. Rune colours are linear light: these are the sRGB hex values in the comments, decoded.
+// AnySync's site palette, by role: ACCENT marks what is on, DEEP fills it, LIGHT is accent text, ACCENT2 and ACCENT3
+// are the logo's other line colours. Rune colours are linear light: these are the sRGB hex values in the comments,
+// decoded.
 const BG: Color = Color { r: 0.00605, g: 0.00478, b: 0.01161, a: 0.97 }; // #120f1c
 const PANEL: Color = Color { r: 0.01033, g: 0.00750, b: 0.02122, a: 0.84 }; // #1a1528
 const PANEL2: Color = Color { r: 0.01764, g: 0.01229, b: 0.03955, a: 1.0 }; // #241d38
 const FIELD: Color = Color { r: 0.00368, g: 0.00304, b: 0.00700, a: 1.0 }; // #0c0a14
 const EDGE: Color = Color { r: 0.02732, g: 0.01850, b: 0.06301, a: 1.0 }; // #2e2547
 const STEEL: Color = Color { r: 0.15896, g: 0.13014, b: 0.27889, a: 1.0 }; // #6f6590
-const VIOLET: Color = Color { r: 0.25818, g: 0.10702, b: 0.92158, a: 1.0 }; // #8b5cf6
+const ACCENT: Color = Color { r: 0.25818, g: 0.10702, b: 0.92158, a: 1.0 }; // #8b5cf6
 const DEEP: Color = Color { r: 0.15293, g: 0.02122, b: 0.69387, a: 1.0 }; // #6d28d9
-const LILAC: Color = Color { r: 0.55201, g: 0.32778, b: 1.00000, a: 1.0 }; // #c49bff
-const MAGENTA: Color = Color { r: 0.69387, g: 0.06125, b: 0.86316, a: 1.0 }; // #d946ef
-const TEAL: Color = Color { r: 0.11193, g: 0.82279, b: 0.65837, a: 1.0 }; // #5eead4
+const LIGHT: Color = Color { r: 0.55201, g: 0.32778, b: 1.00000, a: 1.0 }; // #c49bff
+const ACCENT2: Color = Color { r: 0.69387, g: 0.06125, b: 0.86316, a: 1.0 }; // #d946ef
+const ACCENT3: Color = Color { r: 0.11193, g: 0.82279, b: 0.65837, a: 1.0 }; // #5eead4
 const INK: Color = Color { r: 0.83880, g: 0.79910, b: 0.93011, a: 1.0 }; // #ece7f7
 const SOFT: Color = Color { r: 0.38133, g: 0.33245, b: 0.52100, a: 1.0 }; // #a69cbf
 const MUTED: Color = Color { r: 0.15593, g: 0.13014, b: 0.25016, a: 1.0 }; // #6e6589
@@ -497,7 +499,7 @@ impl S {
                             self.polled = true;
                             self.old = snap.requests.iter().filter(|(r, _)| !(r.answer == Answer::Pending && fresh(r))).map(|(r, _)| r.path()).collect();
                         }
-                        self.devices = snap.devices.into_iter().filter(|d| d.id != self.cfg.id).collect();
+                        self.devices = snap.devices.into_iter().filter(|d| d.id != self.cfg.id && look::ours(d)).collect();
                         self.devices.sort_by(|a, b| b.seen.cmp(&a.seen));
                         self.requests = snap.requests;
                         self.session = snap.session;
@@ -720,9 +722,9 @@ fn backdrop(s: &S) -> Vec<El> {
     for (i, l) in flow_lines().iter().enumerate() {
         // Violet, with a magenta and a teal thread: the logo's crossing lines.
         let tint = match i % 5 {
-            1 => MAGENTA,
-            3 => TEAL,
-            _ => VIOLET,
+            1 => ACCENT2,
+            3 => ACCENT3,
+            _ => ACCENT,
         };
         for r in &l.inside {
             faint = faint.stroke(l.pts[r.clone()].to_vec(), 1.0, Color { a: 0.07 + 0.06 * env, ..tint });
@@ -749,7 +751,7 @@ fn backdrop(s: &S) -> Vec<El> {
     out.push(full(Shape::new().stroke_path(&body, 2.0, LineCap::Round, EDGE)).key("edge"));
     // The outline lights up violet while files move. No blurred glow: Rune's blur over the transparent desktop
     // outside the body comes out as a hard, oversaturated band.
-    out.push(full(Shape::new().stroke_path(&body, 1.0 + 0.6 * env, LineCap::Round, Color { a: 0.35 + 0.4 * env, ..STEEL.mix(VIOLET, env) })).key("outline-line"));
+    out.push(full(Shape::new().stroke_path(&body, 1.0 + 0.6 * env, LineCap::Round, Color { a: 0.35 + 0.4 * env, ..STEEL.mix(ACCENT, env) })).key("outline-line"));
     out
 }
 
@@ -778,7 +780,7 @@ fn conduit(s: &S) -> Vec<El> {
         let (c, sn) = (ang.cos() * d, ang.sin() * d);
         let pt = |x: f32, y: f32| [p[0] + x * c - y * sn, p[1] + x * sn + y * c];
         let alpha = (0.25 + 0.75 * env) * (std::f32::consts::PI * u).sin();
-        chev = chev.stroke(vec![pt(-5.0, -8.0), pt(4.0, 0.0), pt(-5.0, 8.0)], 2.4, Color { a: alpha, ..if k % 2 == 0 { VIOLET } else { LILAC } });
+        chev = chev.stroke(vec![pt(-5.0, -8.0), pt(4.0, 0.0), pt(-5.0, 8.0)], 2.4, Color { a: alpha, ..if k % 2 == 0 { ACCENT } else { LIGHT } });
     }
     out.push(full(chev.clone()).blur(4.0).key("chev-glow"));
     out.push(full(chev).key("chev"));
@@ -792,13 +794,13 @@ fn device_on_screen(key: &str, name: &str, id: &str, look: &Look, place: Rect, r
     let mut out = drawn.layers;
     let l = look::fix(look);
     let mut screen = col().absolute(x, y).size(w, h).padding(14.0).gap(4.0)
-        .child(row().w_full().center_y().child(caps(role, if this { TEAL } else { LILAC })).child(spacer()).child(mono(if this { "THIS DEVICE" } else { "" }, 9.5, MUTED)))
+        .child(row().w_full().center_y().child(caps(role, if this { ACCENT3 } else { LIGHT })).child(spacer()).child(mono(if this { "THIS DEVICE" } else { "" }, 9.5, MUTED)))
         .child(spacer())
         .child(label(if name.is_empty() { "No device picked" } else { name }, 19.0, 700.0, if name.is_empty() { MUTED } else { INK }))
         .child(mono(look::describe(&l), 10.5, SOFT))
         .child(mono(l.color, 10.0, MUTED));
     if !id.is_empty() {
-        screen = screen.child(row().mt(4.0).child(el().fill(PANEL2).radius(5.0).px(6.0).py(1.0).child(mono(format!("#{id}"), 10.0, LILAC))));
+        screen = screen.child(row().mt(4.0).child(el().fill(PANEL2).radius(5.0).px(6.0).py(1.0).child(mono(format!("#{id}"), 10.0, LIGHT))));
     }
     out.push(screen.key(format!("{key}-screen")));
     out
@@ -811,14 +813,14 @@ fn mini(key: &str, d: &Device, r: Rect, lit: bool, alpha: f32) -> Vec<El> {
     let mut out: Vec<El> = drawn.layers.into_iter().map(|e| e.opacity(alpha)).collect();
     if lit {
         let halo = el().key(format!("{key}-halo")).absolute(x - w * 0.08, y - w * 0.08).size(w * 1.16, h + w * 0.16).radius(w * 0.08)
-            .fill(Color { a: 0.32, ..VIOLET }).blur(w * 0.09).opacity(alpha);
+            .fill(Color { a: 0.32, ..ACCENT }).blur(w * 0.09).opacity(alpha);
         out.insert(1.min(out.len()), halo);
     }
     if !d.name.is_empty() {
         let size = (w / (d.name.chars().count().max(5) as f32 * 0.6)).min(h * 0.3).min(22.0);
         out.push(col().key(format!("{key}-name")).absolute(x, y).size(w, h).center().gap(size * 0.2).opacity(alpha)
             .child(label(d.name.clone(), size, 700.0, if lit { INK } else { SOFT }))
-            .child(mono(format!("#{}", d.id), (size * 0.5).max(8.0), LILAC)));
+            .child(mono(format!("#{}", d.id), (size * 0.5).max(8.0), LIGHT)));
     }
     out
 }
@@ -856,7 +858,7 @@ fn grid(s: &S) -> Vec<El> {
         ("Click the device to work with.".into(), MUTED)
     };
     let mut out = vec![col().key("grid-head").absolute(r.x - 40.0, r.y - 16.0).w(r.w + 80.0).gap(4.0)
-        .child(centred(caps("DEVICES ON THIS ACCOUNT", LILAC)))
+        .child(centred(caps("DEVICES ON THIS ACCOUNT", LIGHT)))
         .child(centred(label(status.0, 11.5, 500.0, status.1)))];
     for (i, (d, cell)) in s.devices.iter().zip(grid_cells(s.devices.len())).enumerate() {
         let alpha = ((s.now - s.found_at - 0.07 * i as f32) / 0.35).clamp(0.0, 1.0);
@@ -904,13 +906,13 @@ fn actions(s: &S) -> Option<El> {
     let r = layout().elements.actions;
     if let Some(req) = s.active_request() {
         return (req.answer == Answer::Pending && req.from == s.cfg.id).then(|| {
-            col().key("actions").absolute(r.x - 30.0, r.y + r.h / 2.0 - 52.0).w(r.w + 60.0).child(centred(mono("waiting for approval…", 10.5, LILAC)))
+            col().key("actions").absolute(r.x - 30.0, r.y + r.h / 2.0 - 52.0).w(r.w + 60.0).child(centred(mono("waiting for approval…", 10.5, LIGHT)))
         });
     }
     let pill = |key: &str, text: &str, dir: f32, help: String| {
         let on = s.hover_dir == dir;
         el().key(key).w_full().h(34.0).center().radius(17.0).cursor(Cursor::Pointer)
-            .fill(if on { DEEP } else { PANEL2 }).border(1.0, if on { VIOLET } else { EDGE })
+            .fill(if on { DEEP } else { PANEL2 }).border(1.0, if on { ACCENT } else { EDGE })
             .shadow(10.0, 24.0, Color { r: 0.0, g: 0.0, b: 0.0, a: 0.45 })
             .child(label(text, 13.0, 700.0, INK))
             .help(help)
@@ -936,8 +938,8 @@ fn card(h: f32) -> El {
 fn button(s: impl Into<String>, primary: bool) -> El {
     el().px(12.0).py(7.0).radius(9.0)
         .fill(if primary { DEEP } else { PANEL2 })
-        .border(1.0, if primary { VIOLET } else { EDGE })
-        .hover(if primary { VIOLET } else { EDGE })
+        .border(1.0, if primary { ACCENT } else { EDGE })
+        .hover(if primary { ACCENT } else { EDGE })
         .cursor(Cursor::Pointer)
         .child(label(s, 12.5, 600.0, INK))
 }
@@ -945,7 +947,7 @@ fn button(s: impl Into<String>, primary: bool) -> El {
 /// One choice of a few side by side.
 fn seg(key: String, s: &str, on: bool) -> El {
     el().key(key).px(10.0).h(28.0).center().radius(7.0).cursor(Cursor::Pointer)
-        .fill(if on { DEEP } else { FIELD }).border(1.0, if on { VIOLET } else { EDGE }).hover(if on { VIOLET } else { EDGE })
+        .fill(if on { DEEP } else { FIELD }).border(1.0, if on { ACCENT } else { EDGE }).hover(if on { ACCENT } else { EDGE })
         .child(label(s, 12.0, if on { 650.0 } else { 500.0 }, if on { INK } else { SOFT }))
 }
 
@@ -966,7 +968,7 @@ fn menu(key: &str, w: f32, h: f32, items: Vec<El>) -> El {
 
 fn menu_row(s: impl Into<String>, on: bool) -> El {
     row().w_full().px(9.0).py(6.0).radius(7.0).hover(PANEL2).cursor(Cursor::Pointer).fill(if on { PANEL2 } else { Color { a: 0.0, ..PANEL2 } })
-        .child(label(s, 12.5, if on { 700.0 } else { 500.0 }, if on { LILAC } else { INK }))
+        .child(label(s, 12.5, if on { 700.0 } else { 500.0 }, if on { LIGHT } else { INK }))
 }
 
 fn kit() -> Kit {
@@ -997,7 +999,7 @@ fn tab_device(s: &S, k: &Kit) -> El {
                     s.cfg.name = s.name.text.trim().to_string();
                     s.cfg.save();
                 }).build(k)))
-            .child(col().gap(4.0).child(caps("ID", MUTED)).child(el().h(32.0).center_y().px(10.0).fill(PANEL2).radius(8.0).child(mono(format!("#{}", s.cfg.id), 13.0, LILAC)))
+            .child(col().gap(4.0).child(caps("ID", MUTED)).child(el().h(32.0).center_y().px(10.0).fill(PANEL2).radius(8.0).child(mono(format!("#{}", s.cfg.id), 13.0, LIGHT)))
                 .help("Made on this device's first run; it never changes.")))
         .child(row().w_full().center_y().child(caps("LOOK", MUTED)).child(spacer()).child(mono(format!("runs {}", s.here.name()), 10.5, MUTED)))
         .child(row().w_full().center_y().gap(8.0).child(systems).child(spacer()).child(kinds));
@@ -1009,7 +1011,7 @@ fn tab_device(s: &S, k: &Kit) -> El {
     for (name, hex) in look::colours(&l) {
         let on = name == l.color;
         let n = Look { color: name.clone(), ..l.clone() };
-        sw = sw.child(el().key(format!("sw-{name}")).size(24.0, 24.0).radius(12.0).fill(look::hx(&hex, STEEL)).border(if on { 2.5 } else { 1.0 }, if on { VIOLET } else { EDGE })
+        sw = sw.child(el().key(format!("sw-{name}")).size(24.0, 24.0).radius(12.0).fill(look::hx(&hex, STEEL)).border(if on { 2.5 } else { 1.0 }, if on { ACCENT } else { EDGE })
             .cursor(Cursor::Pointer).help(name).on_press(move |s: &mut S| s.set_look(n.clone())));
     }
     c = c.child(row().w_full().center_y().gap(10.0).child(sw).child(spacer()).child(mono(l.color.clone(), 11.5, SOFT)));
@@ -1041,7 +1043,7 @@ fn tab_connect(s: &S) -> El {
         let now = i == current;
         let (mark, fg, bg) = if done[i] { ("✓".to_string(), INK, DEEP) } else if now { ((i + 1).to_string(), INK, PANEL2) } else { ((i + 1).to_string(), MUTED, FIELD) };
         c = c.child(row().w_full().gap(10.0).center_y()
-            .child(el().size(22.0, 22.0).radius(11.0).center().fill(bg).border(1.0, if now { VIOLET } else { EDGE }).child(mono(mark, 11.0, fg)))
+            .child(el().size(22.0, 22.0).radius(11.0).center().fill(bg).border(1.0, if now { ACCENT } else { EDGE }).child(mono(mark, 11.0, fg)))
             .child(label(text, 13.0, if now { 600.0 } else { 500.0 }, if now { INK } else if done[i] { SOFT } else { MUTED }).wrap().grow(1.0)));
     }
     let declined = s.requests.iter().map(|(r, _)| r).filter(|r| r.from == s.cfg.id && !s.old.contains(&r.path())).max_by_key(|r| r.at)
@@ -1052,7 +1054,7 @@ fn tab_connect(s: &S) -> El {
         _ if declined => "The other device declined.",
         _ => "",
     };
-    c.child(label(state, 12.0, 600.0, LILAC).wrap().w_full())
+    c.child(label(state, 12.0, 600.0, LIGHT).wrap().w_full())
 }
 
 fn group_title(g: &str) -> String {
@@ -1063,7 +1065,7 @@ fn group_title(g: &str) -> String {
 fn tick(key: String, on: usize, all: usize, enabled: bool) -> El {
     let mark = if all > 0 && on == all { "✓" } else if on > 0 { "−" } else { "" };
     el().key(key).size(16.0, 16.0).radius(4.0).center()
-        .fill(if on == 0 { FIELD } else { DEEP }).border(1.0, if !enabled { DIM } else if on == 0 { EDGE } else { VIOLET })
+        .fill(if on == 0 { FIELD } else { DEEP }).border(1.0, if !enabled { DIM } else if on == 0 { EDGE } else { ACCENT })
         .child(mono(mark, 10.0, INK))
 }
 
@@ -1135,7 +1137,7 @@ fn tab_pick(s: &S) -> El {
                 r = r.child(mono(folder, 10.0, MUTED));
             }
             if i.secret {
-                r = r.child(mono("secret", 9.5, MAGENTA));
+                r = r.child(mono("secret", 9.5, ACCENT2));
             }
             if !fits {
                 r = r.child(mono(format!("no place on {}", os.name()), 9.5, DIM));
@@ -1152,7 +1154,7 @@ fn tab_pick(s: &S) -> El {
             .child(button("Cancel", false).key("cancel").on_press(|s: &mut S| s.choose(false)))
             .child(button(go, true).key(key).on_press(|s: &mut S| s.choose(true)))
     } else {
-        row().child(label(s.live().map(|l| l.note).unwrap_or_default(), 12.0, 600.0, LILAC))
+        row().child(label(s.live().map(|l| l.note).unwrap_or_default(), 12.0, 600.0, LIGHT))
     };
     col().w_full().gap(6.0)
         .child(row().w_full().center_y()
@@ -1192,10 +1194,10 @@ fn tab_move(s: &S) -> El {
     let pct = if l.items > 0 { l.items_done as f32 / l.items as f32 } else if l.state == "done" { 1.0 } else { 0.0 };
     let w = layout().elements.left_panel.w - 28.0;
     let mut c = col().w_full().gap(7.0)
-        .child(row().w_full().center_y().child(caps(state, if failed { ERR } else { VIOLET })).child(spacer())
+        .child(row().w_full().center_y().child(caps(state, if failed { ERR } else { ACCENT })).child(spacer())
             .child(mono(format!("{}/{} items", l.items_done, l.items), 11.0, SOFT)))
         .child(mono(fmt_bytes(l.bytes), 12.5, INK))
-        .child(el().w_full().h(6.0).radius(3.0).fill(FIELD).child(el().h(6.0).w(w * pct).radius(3.0).linear_gradient(1.57, [(0.0, DEEP), (0.6, MAGENTA), (1.0, TEAL)])))
+        .child(el().w_full().h(6.0).radius(3.0).fill(FIELD).child(el().h(6.0).w(w * pct).radius(3.0).linear_gradient(1.57, [(0.0, DEEP), (0.6, ACCENT2), (1.0, ACCENT3)])))
         .child(label(l.current.clone(), 12.0, 500.0, MUTED));
     if l.state != "done" && !l.note.is_empty() {
         c = c.child(label(l.note.clone(), 11.5, 600.0, if failed { ERR } else { SOFT }).wrap().w_full());
@@ -1206,7 +1208,7 @@ fn tab_move(s: &S) -> El {
             let goal = dir.join("GOAL.md").display().to_string();
             c.child(label(format!("{} in place · {} to look at · {} missing", l.placed, l.problems, l.missing), 13.0, 650.0, INK))
                 .child(label("An agent finishes the setup from the brief:", 12.0, 500.0, SOFT))
-                .child(text(goal).font(TextStyle::new(11.0, 500.0).mono()).color(LILAC).wrap().w_full())
+                .child(text(goal).font(TextStyle::new(11.0, 500.0).mono()).color(LIGHT).wrap().w_full())
                 .child(row().w_full().gap(8.0).center_y().child(spacer())
                     .child(button("Open folder", false).key("open-dir").on_press(move |_: &mut S| open_folder(&dir)))
                     .child(again))
@@ -1227,7 +1229,7 @@ fn left_panel(s: &S, k: &Kit) -> El {
     for (i, name) in names.iter().enumerate() {
         let on = s.tab == i as u8 + 1;
         tabs = tabs.child(el().key(format!("tab-{}", i + 1)).grow(1.0).h(28.0).center().radius(5.0)
-            .fill(if on { DEEP } else { PANEL }).border(1.0, if on { VIOLET } else { EDGE }).cursor(Cursor::Pointer)
+            .fill(if on { DEEP } else { PANEL }).border(1.0, if on { ACCENT } else { EDGE }).cursor(Cursor::Pointer)
             .child(caps(*name, if on { INK } else { MUTED }))
             .on_press(move |s: &mut S| s.tab = i as u8 + 1));
     }
@@ -1251,13 +1253,13 @@ fn right_panel(s: &S) -> El {
     let mut c = card(r.h);
     match &s.session {
         Some(x) => {
-            c = c.child(row().w_full().center_y().child(caps("TRANSFER", VIOLET)).child(spacer()).child(mono(x.state.clone(), 10.5, LILAC)))
+            c = c.child(row().w_full().center_y().child(caps("TRANSFER", ACCENT)).child(spacer()).child(mono(x.state.clone(), 10.5, LIGHT)))
                 .child(label(format!("{}  ⟶  {}", x.sender.name, x.receiver.name), 13.0, 600.0, INK))
                 .child(mono(format!("started {}", x.started_utc), 10.0, MUTED));
         }
         None => {
             let d = s.peer_device().filter(|_| !s.finding);
-            let mut head = row().w_full().center_y().child(caps("OTHER DEVICE", LILAC)).child(spacer());
+            let mut head = row().w_full().center_y().child(caps("OTHER DEVICE", LIGHT)).child(spacer());
             if d.is_some() && s.active_request().is_none() {
                 head = head.child(button("Change", false).key("change").on_press(|s: &mut S| s.find()));
             }
@@ -1288,7 +1290,7 @@ fn incoming(s: &S, r: &Request) -> El {
     };
     let card = col().w_full().fill(Color { r: 0.006, g: 0.005, b: 0.014, a: 1.0 }).border(1.0, DEEP).radius(16.0).padding(22.0).gap(12.0)
         .shadow(30.0, 80.0, Color { r: 0.0, g: 0.0, b: 0.0, a: 0.6 })
-        .child(caps("REQUEST", VIOLET))
+        .child(caps("REQUEST", ACCENT))
         .child(label(title, 19.0, 700.0, INK))
         .child(label(body, 13.5, 500.0, SOFT).wrap().w_full())
         .child(row().w_full().gap(10.0).child(spacer())
@@ -1330,7 +1332,7 @@ fn view(s: &S, _: &mut Cx<S>) -> El {
     };
     root = root
         .child(row().absolute(e.title.x, e.title.y).gap(10.0).center_y().window_drag()
-            .child(row().child(label("Any", 26.0, 800.0, INK)).child(label("~", 26.0, 800.0, MAGENTA)).child(label("Sync", 26.0, 800.0, LILAC)))
+            .child(row().child(label("Any", 26.0, 800.0, INK)).child(label("~", 26.0, 800.0, ACCENT2)).child(label("Sync", 26.0, 800.0, LIGHT)))
             .child(mono(format!("NYSYN · v{}", env!("CARGO_PKG_VERSION")), 10.5, MUTED)))
         .child(row().absolute(e.controls.x, e.controls.y).gap(6.0)
             .child(button("▁", false).key("min").on_press_tx(|_: &mut S, tx: &mut Tx| tx.minimize()))
