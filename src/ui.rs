@@ -1,6 +1,7 @@
-//! The window: borderless and see-through, shaped like two lobes and a bridge, as MacySync's. This device is always
-//! on the left, the other on the right, each drawn in its own look (any of the three systems). While files move,
-//! the lines run from the sender to the receiver.
+//! The window: borderless and see-through, shaped as three lobes that meet in the middle, one for each system: this
+//! device on the left, the other on the right with its card, the panel below. Send, Receive and the name sit where
+//! they meet, and the background lines cross there. Each device is drawn in its own look (any of the three
+//! systems). While files move, the lines run from the sender to the receiver.
 //!
 //! The bus is read every 5 s on a thread. A transfer runs the command line's own `session::send` or
 //! `session::receive` on a thread of its own: it takes the person's ticks from 03 PICK and shows its progress in
@@ -40,10 +41,14 @@ const MUTED: Color = Color { r: 0.15593, g: 0.13014, b: 0.25016, a: 1.0 }; // #6
 const DIM: Color = Color { r: 0.04667, g: 0.03434, b: 0.09306, a: 1.0 }; // #3d3456
 const ERR: Color = Color { r: 0.96469, g: 0.16513, b: 0.23455, a: 1.0 }; // #fb7185
 
-/// Where everything sits: MacySync's assets/layout.json, so the family shares one shape.
+/// Where everything sits: assets/layout.json, in the same form as MacySync's; each app of the family has its own
+/// outline.
 #[derive(serde::Deserialize)]
 struct Layout {
     outline: Vec<[f32; 2]>,
+    /// Straight edges between the outline's points, and lines that bend at 45°, instead of smooth curves.
+    #[serde(default)]
+    sharp: bool,
     elements: Elements,
     conduit: [[f32; 2]; 4],
     flow: FlowGuide,
@@ -77,8 +82,8 @@ struct Band {
     spread: f32,
 }
 
-/// The background lines: where they fan out over each lobe and squeeze through the bridge, and the x ranges where
-/// they bend from one band to the next.
+/// The background lines: where they fan out on the left, squeeze through the middle and fan out on the right (a
+/// negative spread crosses them over), and the x ranges where they bend from one band to the next.
 #[derive(serde::Deserialize, Clone, Copy)]
 struct FlowGuide {
     left: Band,
@@ -592,16 +597,18 @@ fn centred(e: El) -> El {
     row().w_full().child(spacer()).child(e).child(spacer())
 }
 
-/// The outline through the layout's points, smoothed (Catmull-Rom): a tall lobe on the left for this device, a
-/// bridge, and a lower lobe on the right for the other.
+/// The outline through the layout's points, smoothed (Catmull-Rom), or straight from point to point when the layout
+/// is sharp.
 fn segments() -> Vec<([f32; 2], [f32; 2], [f32; 2], [f32; 2])> {
     let o = &layout().outline;
     let n = o.len();
     (0..n)
         .map(|i| {
             let (p0, p1, p2, p3) = (o[(i + n - 1) % n], o[i], o[(i + 1) % n], o[(i + 2) % n]);
-            let c1 = [p1[0] + (p2[0] - p0[0]) / 6.0, p1[1] + (p2[1] - p0[1]) / 6.0];
-            let c2 = [p2[0] - (p3[0] - p1[0]) / 6.0, p2[1] - (p3[1] - p1[1]) / 6.0];
+            // Sharp: the control points on the straight line, a third of the way in from each end.
+            let ((a, b), k) = if layout().sharp { ((p1, p2), 1.0 / 3.0) } else { ((p0, p3), 1.0 / 6.0) };
+            let c1 = [p1[0] + (p2[0] - a[0]) * k, p1[1] + (p2[1] - a[1]) * k];
+            let c2 = [p2[0] - (b[0] - p1[0]) * k, p2[1] - (b[1] - p1[1]) * k];
             (p1, c1, c2, p2)
         })
         .collect()
@@ -661,19 +668,25 @@ fn flow_lines() -> &'static [FlowLine] {
         (0..LINES)
             .map(|i| {
                 let o = -1.0 + 2.0 * i as f32 / (LINES - 1) as f32;
-                // They fan out over each lobe and squeeze through the bridge.
+                // They fan out on each side and squeeze through the middle.
                 let f = layout().flow;
                 let (yl, yb, yr) = (f.left.y + o * f.left.spread, f.bridge.y + o * f.bridge.spread, f.right.y + o * f.right.spread);
-                let wobble = 4.0 + 6.0 * hash(i as u32 * 7 + 1);
+                let wobble = if layout().sharp { 0.0 } else { 4.0 + 6.0 * hash(i as u32 * 7 + 1) };
                 let shift = hash(i as u32 * 13 + 5) * std::f32::consts::TAU;
                 let pts: Vec<[f32; 2]> = (0..SAMPLES)
                     .map(|j| {
                         let x = -20.0 + 1320.0 * j as f32 / (SAMPLES - 1) as f32;
-                        let sm = |a: f32, b: f32| {
-                            let t = ((x - a) / (b - a)).clamp(0.0, 1.0);
-                            t * t * (3.0 - 2.0 * t)
+                        // How far the line has moved by `dy` over the range: smoothly, or at 45° in its middle as a
+                        // circuit trace bends.
+                        let bend = |[a, b]: [f32; 2], dy: f32| {
+                            if layout().sharp {
+                                dy * ((x - (a + b) / 2.0) / dy.abs().max(1.0) + 0.5).clamp(0.0, 1.0)
+                            } else {
+                                let t = ((x - a) / (b - a)).clamp(0.0, 1.0);
+                                dy * t * t * (3.0 - 2.0 * t)
+                            }
                         };
-                        let y = yl + (yb - yl) * sm(f.into_bridge[0], f.into_bridge[1]) + (yr - yb) * sm(f.into_right[0], f.into_right[1]) + wobble * (x / 160.0 + shift).sin();
+                        let y = yl + bend(f.into_bridge, yb - yl) + bend(f.into_right, yr - yb) + wobble * (x / 160.0 + shift).sin();
                         [x, y]
                     })
                     .collect();
