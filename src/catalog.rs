@@ -196,7 +196,10 @@ pub fn on_path(prog: &str) -> bool {
 
 /// A list's text: what the command printed (or wrote to `{out}`), and why it failed when it did.
 pub fn run_list(run: &[String]) -> Vec<u8> {
-    let out = std::env::temp_dir().join(format!("anysync-list-{}.txt", std::process::id()));
+    // One file per call: tests run lists side by side in one process.
+    static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let out = std::env::temp_dir().join(format!("anysync-list-{}-{n}.txt", std::process::id()));
     let args: Vec<String> = run[1..].iter().map(|a| a.replace("{out}", &out.display().to_string())).collect();
     // `code` and `npm` are .cmd scripts on Windows, which only cmd runs.
     let mut cmd = if cfg!(windows) { let mut c = std::process::Command::new("cmd"); c.arg("/C").arg(&run[0]); c } else { std::process::Command::new(&run[0]) };
