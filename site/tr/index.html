@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnySync: kurulumunu macOS, Windows ve Linux arasında taşı</title>
+<meta name="description" content="AnySync editör ayarlarını, anahtarlarını, dotfile'larını, klasörlerini ve kurulu araçların listelerini bir bilgisayardan ötekine taşır; ikisi macOS, Windows ya da Linux, hangisi olursa. Cihazdan cihaza, uçtan uca şifreli; kurulumu yapay zekâ ajanın için yazılan bir not bitirir.">
+<link rel="canonical" href="https://anysync.vercel.app/tr/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AnySync">
+<meta property="og:url" content="https://anysync.vercel.app/tr/">
+<meta property="og:title" content="AnySync: kurulumunu macOS, Windows ve Linux arasında taşı">
+<meta property="og:description" content="AnySync editör ayarlarını, anahtarlarını, dotfile'larını, klasörlerini ve kurulu araçların listelerini bir bilgisayardan ötekine taşır; ikisi macOS, Windows ya da Linux, hangisi olursa. Cihazdan cihaza, uçtan uca şifreli; kurulumu yapay zekâ ajanın için yazılan bir not bitirir.">
+<meta property="og:image" content="https://anysync.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="tr_TR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AnySync: kurulumunu macOS, Windows ve Linux arasında taşı">
+<meta name="twitter:description" content="AnySync editör ayarlarını, anahtarlarını, dotfile'larını, klasörlerini ve kurulu araçların listelerini bir bilgisayardan ötekine taşır; ikisi macOS, Windows ya da Linux, hangisi olursa. Cihazdan cihaza, uçtan uca şifreli; kurulumu yapay zekâ ajanın için yazılan bir not bitirir.">
+<meta name="twitter:image" content="https://anysync.vercel.app/og.png">
+<meta name="theme-color" content="#120f1c">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "AnySync", "applicationCategory": "UtilitiesApplication", "operatingSystem": "macOS, Windows, Linux", "url": "https://anysync.vercel.app/", "downloadUrl": "https://github.com/Ege-BULUT/AnySync/releases/latest", "softwareVersion": "0.1.0", "license": "https://opensource.org/licenses/MIT", "image": "https://anysync.vercel.app/og.png", "description": "AnySync editör ayarlarını, anahtarlarını, dotfile'larını, klasörlerini ve kurulu araçların listelerini bir bilgisayardan ötekine taşır; ikisi macOS, Windows ya da Linux, hangisi olursa. Cihazdan cihaza, uçtan uca şifreli; kurulumu yapay zekâ ajanın için yazılan bir not bitirir.", "author": {"@type": "Person", "name": "Ege BULUT", "url": "https://github.com/Ege-BULUT"}, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script>
+<link rel="alternate" hreflang="en" href="https://anysync.vercel.app/">
+<link rel="alternate" hreflang="tr" href="https://anysync.vercel.app/tr/">
+<link rel="alternate" hreflang="x-default" href="https://anysync.vercel.app/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23120f1c'/%3E%3Cpath d='M7 7L25 25M25 7L7 25' stroke='%23d946ef' stroke-width='3.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%235eead4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="./"><span>Any<b>~</b>Sync</span> <small>NYSYN</small></a>
+    <div class="links">
+      <a href="#how" class="opt">Nasıl çalışır</a>
+      <a href="features/">Özellikler</a>
+      <a href="docs/">Belgeler</a>
+      <a href="changelog/" class="opt">Değişiklikler</a>
+      <a href="#family" class="opt">Aile</a>
+      <a href="download/">İndir</a>
+    </div>
+    <a class="btn lang" id="lang" href="../" hreflang="en" aria-label="English">EN</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <svg class="bg" viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g class="x-ribbon"><path class="xo" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/><path class="xo" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/><path class="xf" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/><path class="xf" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/></g>
+    <path class="xl base" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/><path class="xl base" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/>
+    <path class="xl a" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/>
+    <path class="xl b" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/>
+    <path class="xl c" d="M -80 440 C 300 300 520 400 720 380 S 1180 320 1520 430"/>
+    <circle class="xring" cx="720" cy="380" r="10"><animate attributeName="r" values="10;90" dur="3.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="3.2s" repeatCount="indefinite"/></circle>
+    <circle class="xhub" cx="720" cy="380" r="9"/>
+  </svg>
+  <div class="wrap hero-grid">
+    <div>
+      <img class="logo" src="../logo.svg" alt="NYSYN, AnySync logo">
+      <h1>Kurulumun,&nbsp;<em>hangi bilgisayarda olursa.</em></h1>
+      <p class="lead">Any~Sync editör ayarlarını, anahtarlarını, dotfile'larını, klasörlerini ve kurulu araçların listelerini bir bilgisayardan ötekine taşır; ikisi macOS, Windows ya da Linux, hangisi olursa. Dosyalar doğrudan cihazdan cihaza, uçtan uca şifreli gider ve her öğe yeni sistemin onu tuttuğu yere iner.</p>
+      <div class="cta">
+        <a class="btn red" href="download/">İndir</a>
+        <a class="btn" href="#how">Nasıl çalışır</a>
+      </div>
+      <div class="ticker"><span>AnY.<b>SYNc</b></span><span>MAC ⇄ WINDOWS ⇄ LINUX</span><span>Rust &amp; Rune ile yazıldı</span><span>MIT</span></div>
+    </div>
+    <div class="shot"><img src="../sending.png" width="2560" height="1560" alt="AnySync penceresi: solda bir Windows masaüstü, sağdaki Linux laptopa gönderiyor"></div>
+  </div>
+</header>
+
+<svg class="divider" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 54 C 360 54 520 16 720 35 S 1080 16 1440 16"/><path class="run" style="animation-delay:-0s" d="M0 54 C 360 54 520 16 720 35 S 1080 16 1440 16"/><path d="M0 16 C 360 16 520 54 720 35 S 1080 54 1440 54"/><path class="run" style="animation-delay:-2s" d="M0 16 C 360 16 520 54 720 35 S 1080 54 1440 54"/></svg>
+
+<section id="how">
+  <div class="wrap">
+    <span class="caps">Nasıl çalışır</span>
+    <h2>GitHub tanıştırır, <em>cihazlar doğrudan konuşur</em></h2>
+    <p class="sub">Cihazların senin özel bir GitHub deponda buluşur. Dosyalar oraya hiç gitmez: bir bilgisayardan ötekine gider, ikisi hangi sistemde olursa olsun.</p>
+
+    <div class="stage reveal">
+      <div class="stage-head"><span class="caps">01</span><h3>Her sistem gönderir, her sistem alır</h3><p>Bir Windows masaüstü kurulumunu bir Linux laptopa verir, bir Mac bir PC'ye; ya da başka herhangi bir ikili.</p></div>
+      <svg viewBox="0 0 1100 380" role="img" aria-label="İki cihaz özel bir GitHub deposunda buluşur ve dosyaları birbirine doğrudan gönderir">
+        <defs><linearGradient id="wireGrad" x1="0" x2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
+        <path id="c1" class="wire" d="M 150 230 C 150 150 300 100 400 100"/>
+        <path id="c2" class="wire" d="M 700 100 C 800 100 950 150 950 230"/>
+        <path class="wire hot" d="M 150 230 C 150 150 300 100 400 100"/>
+        <path class="wire hot" style="animation-delay:-.6s" d="M 700 100 C 800 100 950 150 950 230"/>
+        <path id="dw" class="wire" d="M 265 300 C 420 300 450 340 550 340 S 690 300 835 300"/>
+        <path class="wire hot" style="stroke-width:4" d="M 265 300 C 420 300 450 340 550 340 S 690 300 835 300"/>
+        <g class="node repo" transform="translate(400 20)">
+          <rect width="300" height="170" rx="20"/>
+          <text class="t" x="22" y="38">you / anysync-bus</text>
+          <text class="s" x="22" y="60">Özel depo: buluşma noktası</text>
+          <text class="folder on" x="22" y="98">▸ devices/</text>
+          <text class="folder on" style="animation-delay:1s" x="22" y="124">▸ requests/</text>
+          <text class="folder on" style="animation-delay:2s" x="22" y="150">▸ transfers/</text>
+        </g>
+        <g class="node" transform="translate(35 240)"><rect width="230" height="100" rx="16"/><rect class="scr" x="14" y="14" width="44" height="30" rx="3"/><path class="ink" d="M36 44 V52 M26 53 H46"/><text class="t" x="72" y="38">Masaüstü PC</text><text class="s" x="72" y="60">Windows #7f3a2c91</text><text class="s" x="72" y="82" fill="#d946ef">gönderir</text></g>
+        <g class="node" transform="translate(835 240)"><rect width="230" height="100" rx="16"/><rect class="scr" x="16" y="18" width="40" height="27" rx="4"/><path class="ink" d="M10 50 H62 M22 26 l5 4 -5 4 M30 37 H40"/><text class="t" x="72" y="38">Seyahat laptopu</text><text class="s" x="72" y="60">Linux #5b21d0aa</text><text class="s" x="72" y="82" fill="#5eead4">alır</text></g>
+        <text class="s" x="30" y="112" style="font:500 12px var(--mono);fill:var(--muted)">kimlikler, istekler, mühürlü anahtarlar</text>
+        <text class="s" x="550" y="372" text-anchor="middle" style="font:500 12px var(--mono);fill:var(--muted)">dosyalar: cihazdan cihaza, uçtan uca şifreli</text>
+        <circle class="pkt v" r="5"><animateMotion dur="3s" repeatCount="indefinite"><mpath href="#c1"/></animateMotion></circle>
+        <circle class="pkt v" r="5"><animateMotion dur="3s" begin="1.5s" repeatCount="indefinite"><mpath href="#c2"/></animateMotion></circle>
+        <circle class="pkt" r="7"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#dw"/></animateMotion></circle>
+        <circle class="pkt" r="7"><animateMotion dur="2.4s" begin=".8s" repeatCount="indefinite"><mpath href="#dw"/></animateMotion></circle>
+        <circle class="pkt" r="7"><animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite"><mpath href="#dw"/></animateMotion></circle>
+      </svg>
+    </div>
+
+    <div class="stage reveal">
+      <div class="stage-head"><span class="caps">02</span><h3>Bir bilgisayardan ötekine</h3></div>
+      <div class="steps">
+        <div class="rail" aria-hidden="true"><svg viewBox="0 0 1000 30" preserveAspectRatio="none"><path d="M0 15 C 100 0 150 30 250 15 S 400 0 500 15 S 650 30 750 15 S 900 0 1000 15" fill="none" stroke="var(--edge)" stroke-width="2"/><circle r="6" fill="var(--red2)"><animateMotion dur="10s" repeatCount="indefinite" path="M0 15 C 100 0 150 30 250 15 S 400 0 500 15 S 650 30 750 15 S 900 0 1000 15"/></circle></svg></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></div><span class="n">01</span><h4>Bul</h4><p>Hesabındaki cihazlar Mac, PC ve Linux makineleri olarak çıkar. Birine tıkla, seç.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 8h15l-4-4M20 16H5l4 4"/></svg></div><span class="n">02</span><h4>İste</h4><p>Göndermeyi ya da almayı seç. Diğer cihaz sahibinden onay ister.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><span class="n">03</span><h4>Seç</h4><p>Gönderen elindekini sunar; her öğe nereye ineceğini ya da orada yeri olmadığını söyler.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h10l6 6-6 6H4z"/></svg></div><span class="n">04</span><h4>Taşı</h4><p>Yalnızca seçilenler gider, doğrudan ve şifreli. Bağlantı koparsa eksik kalanlar yeniden istenir.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg></div><span class="n">05</span><h4>Bitir</h4><p>Her öğe yerine iner; GOAL.md de yapay zekâ ajanına geriye ne kaldığını söyler.</p></div>
+      </div>
+    </div>
+
+    <div class="stage reveal">
+      <div class="stage-head"><span class="caps">03</span><h3>Her şey kendi yerine iner</h3><p>Bir öğe göndericinin yollarıyla değil, adıyla taşınır.</p></div>
+      <div class="land"><table>
+        <thead><tr><th>Öğe</th><th>macOS</th><th>Windows</th><th>Linux</th></tr></thead>
+        <tbody>
+        <tr><td>VS Code ayarları</td><td><code>~/Library/Application Support/Code/User</code></td><td><code>%APPDATA%\Code\User</code></td><td><code>~/.config/Code/User</code></td></tr>
+        <tr><td>GnuPG</td><td><code>~/.gnupg</code></td><td><code>%APPDATA%\gnupg</code></td><td><code>~/.gnupg</code></td></tr>
+        <tr><td>Chrome yer imleri</td><td><code>~/Library/Application Support/Google/Chrome</code></td><td><code>%LOCALAPPDATA%\Google\Chrome\User Data</code></td><td><code>~/.config/google-chrome</code></td></tr>
+        <tr><td>PowerShell profili</td><td><code>~/.config/powershell</code></td><td><code>~/Documents/PowerShell</code></td><td><code>~/.config/powershell</code></td></tr>
+        <tr><td>Videolar</td><td><code>~/Movies</code></td><td><code>%USERPROFILE%\Videos</code></td><td><code>~/Videos</code></td></tr>
+        </tbody></table></div>
+      <p class="note">Orada zaten olan ne varsa yanında <code>.before-anysync</code> olarak saklanır. Metin ayarlarının içindeki eski ev klasörü yolları, ajanın değiştirmesi için notta listelenir; sistemler farklıysa ayraçlar da değişir.</p>
+    </div>
+    <a class="more" href="docs/">Belgeleri oku →</a>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <span class="caps">Özellikler</span>
+    <h2>Geçişi zahmetsiz yapanlar</h2>
+    <p class="sub">Her bilgisayarda aynı küçük uygulama; üç sistemde de aynı pencere.</p>
+    <div class="grid">
+      <div class="card reveal"><span class="k">ANY TO ANY</span><h3>Her ikili, iki yöne de</h3><p>macOS, Windows ve Linux, herhangi bir ikili. Sabit bir gönderen yok: oturum başına iki taraftan biri gönderir ya da alır.</p></div>
+      <div class="card reveal"><span class="k">BY NAME</span><h3>Yollar değil, öğeler</h3><p>VS Code ayarları, her sistemdeki klasörünü bilen tek bir öğedir; böylece yeni sistemin onu tuttuğu yere iner.</p></div>
+      <div class="card reveal"><span class="k">FITS</span><h3>Yalnızca yeri olanlar</h3><p>Alan taraf kendi sistemine uyanları görür ve istediklerini işaretler. Orada yeri olmayanlar bunu açıkça söyler.</p></div>
+      <div class="card reveal"><span class="k">DIRECT</span><h3>Buluttan değil, doğrudan</h3><p>Dosyalar ağın üzerinden cihazdan cihaza gider. GitHub yalnızca kimin kim olduğunu ve mühürlü anahtarları taşır.</p></div>
+      <div class="card reveal"><span class="k">SEALED</span><h3>Uçtan uca şifreli</h3><p>Teklifler, seçimler ve anahtarlar her cihazın kendi anahtarına mühürlenir; dosyalar XChaCha20-Poly1305 ile akar.</p></div>
+      <div class="card reveal"><span class="k">BRIEF</span><h3>İşi ajanın bitirir</h3><p>GOAL.md neyin nereye indiğini, hangi yolların değişeceğini ve listelerden hangi araçların kurulacağını söyler.</p></div>
+    </div>
+    <a class="more" href="features/">Tüm özellikler →</a>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <span class="caps">Uygulama</span>
+    <h2><em>Any~Sync</em> penceresi</h2>
+    <p class="sub">Uygulamanın çalıştığı cihaz hep solda, diğeri sağda; çizgiler gönderenden alana akar.</p>
+    <div class="gallery">
+      <figure class="reveal"><img src="../start.png" width="2560" height="1560" alt="01 · Solda bu cihaz, diğeri henüz bulunmadı" loading="lazy"><figcaption>01 · Solda bu cihaz, diğeri henüz bulunmadı</figcaption></figure>
+      <figure class="reveal"><img src="../find.png" width="2560" height="1560" alt="02 · Bu hesaptaki cihazlar: Mac, Windows ve Linux" loading="lazy"><figcaption>02 · Bu hesaptaki cihazlar: Mac, Windows ve Linux</figcaption></figure>
+      <figure class="reveal"><img src="../request.png" width="2560" height="1560" alt="03 · Diğer cihaz onaylar" loading="lazy"><figcaption>03 · Diğer cihaz onaylar</figcaption></figure>
+      <figure class="reveal"><img src="../pick.png" width="2560" height="1560" alt="04 · Seç: her öğe nereye ineceğini söyler" loading="lazy"><figcaption>04 · Seç: her öğe nereye ineceğini söyler</figcaption></figure>
+      <figure class="reveal"><img src="../sending.png" width="2560" height="1560" alt="Gönderiliyor: çizgiler alana doğru akar" loading="lazy"><figcaption>Gönderiliyor: çizgiler alana doğru akar</figcaption></figure>
+      <figure class="reveal"><img src="../done.png" width="2560" height="1560" alt="Bitti: not ajanın için hazır" loading="lazy"><figcaption>Bitti: not ajanın için hazır</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="moves">
+  <div class="wrap">
+    <span class="caps">Sistemler arasında</span>
+    <h2>Neler geçer, <em>neler geçemez</em></h2>
+    <p class="sub">AnySync öteki sistemde hâlâ anlamı olanı taşır ve geride bıraktığını açıkça söyler.</p>
+    <div class="cols">
+      <div class="box yes reveal">
+        <h3>Taşınanlar</h3>
+        <ul>
+          <li><strong>Dosyalar:</strong> Masaüstü, Belgeler, İndirilenler, Resimler, Müzik ve Videolar; her üst öğe ayrı seçilir. <code>node_modules</code>, <code>target</code>, <code>.venv</code> gibi kaynaktan yeniden kurulan klasörler geride kalır.</li>
+          <li><strong>Kabuk ve git:</strong> git ayarı, SSH ve GnuPG anahtarları, zsh, bash ve PowerShell profilleri.</li>
+          <li><strong>Editörler ve terminaller:</strong> VS Code, Cursor, Zed, Wave.</li>
+          <li><strong>Notlar, tarayıcılar, yapay zekâ araçları:</strong> Obsidian kasa listesi, Chrome, Brave, Edge ve Chromium yer imleri, Claude Code, Codex.</li>
+          <li><strong>Kurulu araçların listeleri:</strong> Homebrew, winget, Scoop, apt, dnf, pacman, Flatpak, Snap, npm, cargo, pipx, VS Code ve Cursor eklentileri.</li>
+        </ul>
+      </div>
+      <div class="box no reveal">
+        <h3>Taşınmayanlar, ve nedeni</h3>
+        <ul>
+          <li><strong>Uygulamaların kendisi:</strong> bir sistemin programı ötekinde çalışmaz; ajanın onları listelerden yeniden kurar.</li>
+          <li><strong>Tarayıcıda kayıtlı şifreler:</strong> sistemin tuttuğu bir anahtarla mühürlüdür (macOS Anahtar Zinciri, Windows DPAPI, Linux secret service). Tarayıcının kendi eşitlemesini ya da şifre dışa aktarmasını kullan.</li>
+          <li><strong>Sistem ayarları ve makinenin kimliği:</strong> Tailscale düğümü, uzak masaüstü kimlikleri gibi.</li>
+          <li><strong>Girişler:</strong> yapay zekâ araçlarına ve uygulamalara yeni bilgisayarda yeniden giriş yapılır.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="layout">
+  <div class="wrap split">
+    <div>
+      <span class="caps">Depoda</span>
+      <h2>GitHub'da yalnızca tanışma durur.</h2>
+      <pre class="tree"><span class="r">sen/anysync-bus/</span>           <span class="c"># özel</span>
+├── devices/
+│   ├── 7f3a2c91.json    <span class="c"># ad, sistem, görünüm, açık anahtar</span>
+│   └── 5b21d0aa.json
+├── requests/            <span class="c"># gönder ya da al, onay bekler</span>
+└── transfers/
+    └── 20261126-1605_7f3a2c91_5b21d0aa/
+        ├── session.json <span class="c"># ilerleme</span>
+        ├── offer.sealed <span class="c"># gönderenin sundukları</span>
+        ├── picks.sealed <span class="c"># alanın seçtikleri</span>
+        └── key.sealed   <span class="c"># akış anahtarı ve adres</span></pre>
+    </div>
+    <div class="box reveal" style="margin-top:58px">
+      <h3>GitHub'a asla gitmeyenler</h3>
+      <ul>
+        <li>Dosyaların: cihazdan cihaza giderler</li>
+        <li>Taşıdıkların hakkında okunabilir hiçbir şey: teklifler ve seçimler mühürlü</li>
+        <li>GitHub girişin: AnySync onu her seferinde GitHub CLI'dan ister</li>
+        <li>İşaretlemediğin her şey</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="family">
+  <div class="wrap">
+    <span class="caps">Aile</span>
+    <h2>Tek aile, <em>her türlü taşıma</em></h2>
+    <p class="sub">Aynı yapımcı, aynı görünüm. Aynı sistemden aynı sisteme taşıyanlar en derine iner, çünkü iki uç da aynı yolları ve ayarları paylaşır; AnySync sistemler arasında geçer; WavySync de Wave Terminal'i her yerde aynı tutar.</p>
+    <div class="fam">
+      <a class="fm" href="https://macysync.vercel.app/" style="--fa:#4c9dff;--fbg:#0a0e14;--fe:#2a3749"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 44 C 80 44 100 16 160 16 S 240 40 300 40"/><path class="fr" style="animation-delay:-0.0s" d="M0 44 C 80 44 100 16 160 16 S 240 40 300 40"/></svg><span class="fk">MYSY</span><b>Macy<i>~</i>Sync</b><span class="fl">Mac'ten Mac'e</span></a>
+      <a class="fm" href="https://windysync.vercel.app/" style="--fa:#67e8f9;--fbg:#0b1517;--fe:#1d3a40"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 42 H 232 C 266 42 274 16 254 10 C 238 6 226 22 240 30"/><path class="fr" style="animation-delay:-0.0s" d="M0 42 H 232 C 266 42 274 16 254 10 C 238 6 226 22 240 30"/><path class="fb" d="M40 24 H 170 C 186 24 190 12 180 10"/><path class="fr" style="animation-delay:-1.3s" d="M40 24 H 170 C 186 24 190 12 180 10"/></svg><span class="fk">WYSY</span><b>Windy<i>~</i>Sync</b><span class="fl">Windows'tan Windows'a</span></a>
+      <a class="fm" href="https://linysync.vercel.app/" style="--fa:#fbbf24;--fbg:#14120e;--fe:#3a3122"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 46 H 70 V 30 H 160 V 46 H 214 V 16 H 300"/><path class="fr" style="animation-delay:-0.0s" d="M0 46 H 70 V 30 H 160 V 46 H 214 V 16 H 300"/><path class="fb" d="M30 20 H 120 V 8 H 190"/><path class="fr" style="animation-delay:-1.3s" d="M30 20 H 120 V 8 H 190"/></svg><span class="fk">LYSY</span><b>Liny<i>~</i>Sync</b><span class="fl">Linux'tan Linux'a, her dağıtım</span></a>
+      <a class="fm here" href="https://anysync.vercel.app/" style="--fa:#d946ef;--fbg:#120f1c;--fe:#2e2547"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 46 C 90 46 110 14 150 30 S 230 14 300 14"/><path class="fr" style="animation-delay:-0.0s" d="M0 46 C 90 46 110 14 150 30 S 230 14 300 14"/><path class="fb" d="M0 14 C 90 14 110 46 150 30 S 230 46 300 46"/><path class="fr" style="animation-delay:-1.3s" d="M0 14 C 90 14 110 46 150 30 S 230 46 300 46"/></svg><span class="fk">NYSYN</span><b>Any<i>~</i>Sync</b><span class="fl">macOS, Windows ve Linux arasında</span><span class="fh">buradasın</span></a>
+      <a class="fm" href="https://wavysync.vercel.app/" style="--fa:#ff3355;--fbg:#120d19;--fe:#3a2d4f"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 30 C 25 10 50 10 75 30 S 125 50 150 30 S 200 10 225 30 S 275 50 300 30"/><path class="fr" style="animation-delay:-0.0s" d="M0 30 C 25 10 50 10 75 30 S 125 50 150 30 S 200 10 225 30 S 275 50 300 30"/></svg><span class="fk">WYSY</span><b>Wavy<i>~</i>Sync</b><span class="fl">Wave Terminal, her bilgisayarda aynı</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <span class="caps">İndir</span>
+    <h2><em>Any~Sync</em>'i indir.</h2>
+    <div class="dl">
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>macOS</b><span>Apple silicon ve Intel</span><i>Sürümler →</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Windows</b><span>x64</span><i>Sürümler →</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Linux</b><span>x64</span><i>Sürümler →</i></a>
+    </div>
+    <p class="note">Henüz yayınlanmadı: üç sistemin ilk sürümleri sürümler sayfasında olacak. Pencere ve komut satırı tek bir programdır, <code>anysync</code>; girişi yapılmış GitHub CLI ister (<code>gh auth login</code>).</p>
+    <a class="more" href="download/">İndirme sayfası →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>AnySync · MIT · Ege BULUT</span>
+    <span>Apple, Microsoft ya da Linux Foundation ile bağlantısı yoktur; markalar sahiplerinindir.</span>
+  </div>
+</footer>
+
+<script src="../site.js"></script>
+</body>
+</html>

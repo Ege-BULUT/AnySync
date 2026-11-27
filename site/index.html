@@ -4,206 +4,224 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AnySync: move your setup between macOS, Windows and Linux</title>
-<meta name="description" content="AnySync moves your editor settings, keys, dotfiles, project folders and lists of installed tools from one computer to another, whichever of macOS, Windows and Linux each one runs. End-to-end encrypted, device to device, and an AI agent finishes the setup.">
+<meta name="description" content="AnySync moves your editor settings, keys, dotfiles, folders and lists of installed tools from one computer to another, whichever of macOS, Windows and Linux each runs. Device to device, end-to-end encrypted, and a brief for your AI agent finishes the setup.">
 <link rel="canonical" href="https://anysync.vercel.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="AnySync">
 <meta property="og:url" content="https://anysync.vercel.app/">
 <meta property="og:title" content="AnySync: move your setup between macOS, Windows and Linux">
-<meta property="og:description" content="Editor settings, keys, dotfiles, projects and tool lists, from any of the three to any of the three. End-to-end encrypted, device to device.">
+<meta property="og:description" content="AnySync moves your editor settings, keys, dotfiles, folders and lists of installed tools from one computer to another, whichever of macOS, Windows and Linux each runs. Device to device, end-to-end encrypted, and a brief for your AI agent finishes the setup.">
+<meta property="og:image" content="https://anysync.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AnySync: move your setup between macOS, Windows and Linux">
+<meta name="twitter:description" content="AnySync moves your editor settings, keys, dotfiles, folders and lists of installed tools from one computer to another, whichever of macOS, Windows and Linux each runs. Device to device, end-to-end encrypted, and a brief for your AI agent finishes the setup.">
+<meta name="twitter:image" content="https://anysync.vercel.app/og.png">
 <meta name="theme-color" content="#120f1c">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "AnySync", "applicationCategory": "UtilitiesApplication", "operatingSystem": "macOS, Windows, Linux", "url": "https://anysync.vercel.app/", "downloadUrl": "https://github.com/Ege-BULUT/AnySync/releases/latest", "softwareVersion": "0.1.0", "license": "https://opensource.org/licenses/MIT", "image": "https://anysync.vercel.app/og.png", "description": "AnySync moves your editor settings, keys, dotfiles, folders and lists of installed tools from one computer to another, whichever of macOS, Windows and Linux each runs. Device to device, end-to-end encrypted, and a brief for your AI agent finishes the setup.", "author": {"@type": "Person", "name": "Ege BULUT", "url": "https://github.com/Ege-BULUT"}, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script>
+<link rel="alternate" hreflang="en" href="https://anysync.vercel.app/">
+<link rel="alternate" hreflang="tr" href="https://anysync.vercel.app/tr/">
+<link rel="alternate" hreflang="x-default" href="https://anysync.vercel.app/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23120f1c'/%3E%3Cpath d='M7 7L25 25M25 7L7 25' stroke='%23d946ef' stroke-width='3.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%235eead4'/%3E%3C/svg%3E">
-<style>
-:root {
-  --bg: #120f1c; --panel: #1a1528; --line: #2e2547; --text: #ece7f7; --dim: #a69cbf;
-  --violet: #8b5cf6; --lilac: #c49bff; --magenta: #d946ef; --teal: #5eead4;
-}
-* { box-sizing: border-box; }
-html { color-scheme: dark; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, Roboto, sans-serif; }
-a { color: var(--lilac); }
-code { font: 13.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--teal); overflow-wrap: anywhere; }
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
-nav { border-bottom: 1px solid var(--line); position: sticky; top: 0; background: rgba(18, 15, 28, .9); backdrop-filter: blur(10px); z-index: 2; }
-nav .wrap { display: flex; align-items: center; gap: 20px; height: 58px; }
-.brand { color: var(--text); text-decoration: none; font-weight: 700; font-size: 18px; letter-spacing: .2px; }
-.brand b { color: var(--magenta); }
-.brand small { color: var(--dim); font-weight: 600; font-size: 11px; margin-left: 6px; letter-spacing: 1.5px; }
-nav .links { display: flex; gap: 18px; margin-left: auto; }
-nav .links a { color: var(--dim); text-decoration: none; font-size: 14px; }
-nav .links a:hover { color: var(--text); }
-button.lang { background: none; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 5px 10px; font: 600 12px/1 inherit; cursor: pointer; }
-.hero { padding: 56px 0 40px; }
-.hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
-.logo { width: 100%; max-width: 520px; display: block; margin: 0 0 18px -10px; }
-h1 { font-size: clamp(32px, 4.6vw, 52px); line-height: 1.08; margin: 0 0 18px; letter-spacing: -.5px; }
-h1 em { font-style: normal; background: linear-gradient(90deg, var(--lilac), var(--magenta) 55%, var(--teal)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.lead { color: var(--dim); font-size: 18px; max-width: 560px; margin: 0 0 22px; }
-.chip { display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--dim); background: var(--panel); }
-.chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px var(--teal); }
-.devices { width: 100%; height: auto; }
-.devices .dev { fill: #211a33; stroke: #6b5a99; stroke-width: 2; }
-.devices .screen { fill: #0e0b17; }
-.devices text { fill: var(--dim); font: 600 13px/1 -apple-system, "Segoe UI", sans-serif; text-anchor: middle; letter-spacing: 1px; }
-.devices .flow { fill: none; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 14; animation: run 1.6s linear infinite; }
-.devices .rail { fill: none; stroke: var(--line); stroke-width: 3; }
-@keyframes run { to { stroke-dashoffset: -32; } }
-@media (prefers-reduced-motion: reduce) { .devices .flow { animation: none; } }
-section { padding: 44px 0; border-top: 1px solid var(--line); }
-h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -.2px; }
-.sub { color: var(--dim); margin: 0 0 26px; max-width: 760px; }
-.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
-.step b { display: block; font-size: 13px; letter-spacing: 1.5px; color: var(--magenta); margin-bottom: 6px; }
-.step h3 { margin: 0 0 6px; font-size: 18px; }
-.step p { margin: 0; color: var(--dim); font-size: 14.5px; }
-.table { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
-table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14.5px; }
-th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { color: var(--dim); font-weight: 600; font-size: 12.5px; letter-spacing: 1px; text-transform: uppercase; background: var(--panel); }
-tr:last-child td { border-bottom: 0; }
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
-.card h3 { margin: 0 0 10px; font-size: 18px; }
-.card ul { margin: 0; padding-left: 18px; color: var(--dim); }
-.card li { margin: 5px 0; }
-.card li strong { color: var(--text); font-weight: 600; }
-.yes h3 { color: var(--teal); }
-.no h3 { color: #f0a3c4; }
-.family { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.family a, .family div { display: block; text-decoration: none; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
-.family a:hover { border-color: var(--violet); }
-.family .tag { font-size: 11px; letter-spacing: 1.5px; color: var(--dim); font-weight: 700; }
-.family strong { display: block; font-size: 17px; margin: 4px 0 2px; }
-.family span { color: var(--dim); font-size: 14px; }
-.family .here { border-color: var(--magenta); }
-footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--dim); font-size: 13.5px; }
-footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-@media (max-width: 920px) {
-  .hero-grid, .cols { grid-template-columns: 1fr; }
-  .steps, .family { grid-template-columns: 1fr 1fr; }
-  nav .links a.opt { display: none; }
-}
-@media (max-width: 560px) {
-  .wrap { padding: 0 16px; }
-  .logo { margin-left: 0; }
-  .steps, .family { grid-template-columns: 1fr; }
-  nav .links { gap: 12px; }
-}
-</style>
+<link rel="stylesheet" href="site.css">
 </head>
 <body>
 
 <nav>
   <div class="wrap">
-    <a class="brand" href="./">Any<b>×</b>Sync <small>NYSYN</small></a>
+    <a class="brand" href="./"><span>Any<b>~</b>Sync</span> <small>NYSYN</small></a>
     <div class="links">
-      <a href="#how" data-tr="Nasıl çalışır">How it works</a>
-      <a href="#where" class="opt" data-tr="Nereye iner">Where things land</a>
-      <a href="#family" class="opt" data-tr="Aile">Family</a>
+      <a href="#how" class="opt">How it works</a>
+      <a href="features/">Features</a>
+      <a href="docs/">Docs</a>
+      <a href="changelog/" class="opt">Changelog</a>
+      <a href="#family" class="opt">Family</a>
+      <a href="download/">Download</a>
     </div>
-    <button class="lang" id="lang" aria-label="Language">TR</button>
+    <a class="btn lang" id="lang" href="tr/" hreflang="tr" aria-label="Türkçe">TR</a>
   </div>
 </nav>
 
 <header class="hero">
+  <svg class="bg" viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g class="x-ribbon"><path class="xo" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/><path class="xo" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/><path class="xf" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/><path class="xf" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/></g>
+    <path class="xl base" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/><path class="xl base" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/>
+    <path class="xl a" d="M -80 60 C 380 60 560 250 720 380 S 1060 700 1520 700"/>
+    <path class="xl b" d="M -80 700 C 380 700 560 510 720 380 S 1060 60 1520 60"/>
+    <path class="xl c" d="M -80 440 C 300 300 520 400 720 380 S 1180 320 1520 430"/>
+    <circle class="xring" cx="720" cy="380" r="10"><animate attributeName="r" values="10;90" dur="3.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="3.2s" repeatCount="indefinite"/></circle>
+    <circle class="xhub" cx="720" cy="380" r="9"/>
+  </svg>
   <div class="wrap hero-grid">
     <div>
-      <img class="logo" src="logo.svg" alt="NYSYN, the AnySync logo">
-      <h1 data-tr="Kurulumun, <em>hangi bilgisayarda olursa.</em>">Your setup, <em>on any computer.</em></h1>
-      <p class="lead" data-tr="AnySync editör ayarlarını, anahtarlarını, dotfile'larını, proje klasörlerini ve kurulu araçların listelerini bir bilgisayardan ötekine taşır; ikisi macOS, Windows ya da Linux, hangisi olursa. Dosyalar doğrudan cihazdan cihaza, uçtan uca şifreli gider ve kurulumu bir AI ajanı bitirir.">AnySync moves your editor settings, keys, dotfiles, project folders and lists of installed tools from one computer to another, whichever of macOS, Windows and Linux each one runs. Files go straight device to device, end-to-end encrypted, and an AI agent finishes the setup.</p>
-      <span class="chip"><i></i><span data-tr="Geliştiriliyor: komut satırı üç sistemde de çalışıyor, pencereli uygulama sırada">In development: the command line works on all three, the window app is next</span></span>
+      <img class="logo" src="logo.svg" alt="NYSYN, AnySync logo">
+      <h1>Your setup,&nbsp;<em>on any computer.</em></h1>
+      <p class="lead">Any~Sync moves your editor settings, keys, dotfiles, folders and lists of installed tools from one computer to another, whichever of macOS, Windows and Linux each one runs. Files go straight device to device, end-to-end encrypted, and each item lands where the new system keeps it.</p>
+      <div class="cta">
+        <a class="btn red" href="download/">Download</a>
+        <a class="btn" href="#how">How it works</a>
+      </div>
+      <div class="ticker"><span>AnY.<b>SYNc</b></span><span>MAC ⇄ WINDOWS ⇄ LINUX</span><span>Coded in Rust &amp; Rune</span><span>MIT</span></div>
     </div>
-    <svg class="devices" viewBox="0 0 560 400" role="img" aria-label="A Mac laptop, a Windows desktop and a Linux laptop, joined by moving lines">
-      <defs>
-        <linearGradient id="f1" x1="0" x2="1"><stop offset="0" stop-color="#c49bff"/><stop offset="1" stop-color="#d946ef"/></linearGradient>
-        <linearGradient id="f2" x1="0" x2="1"><stop offset="0" stop-color="#d946ef"/><stop offset="1" stop-color="#5eead4"/></linearGradient>
-        <linearGradient id="f3" x1="0" x2="1"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
-      </defs>
-      <path class="rail" d="M214 112 C 270 70 316 70 366 108"/>
-      <path class="rail" d="M452 228 C 446 262 410 284 366 292"/>
-      <path class="rail" d="M194 292 C 150 284 124 262 120 228"/>
-      <path class="flow" stroke="url(#f1)" d="M214 112 C 270 70 316 70 366 108"/>
-      <path class="flow" stroke="url(#f2)" style="animation-delay:-.5s" d="M452 228 C 446 262 410 284 366 292"/>
-      <path class="flow" stroke="url(#f3)" style="animation-delay:-1s" d="M194 292 C 150 284 124 262 120 228"/>
-      <!-- macOS: a laptop -->
-      <g transform="translate(40 70)">
-        <rect class="dev" x="12" y="0" width="156" height="98" rx="9"/>
-        <rect class="screen" x="21" y="9" width="138" height="78" rx="3"/>
-        <path class="dev" d="M0 104 H180 L170 116 H10 Z"/>
-        <circle cx="90" cy="48" r="13" fill="none" stroke="#c49bff" stroke-width="2.5"/>
-        <text x="90" y="142">macOS</text>
-      </g>
-      <!-- Windows: a monitor on a stand -->
-      <g transform="translate(372 58)">
-        <rect class="dev" x="0" y="0" width="160" height="104" rx="7"/>
-        <rect class="screen" x="8" y="8" width="144" height="80" rx="2"/>
-        <g fill="none" stroke="#5eead4" stroke-width="2.5"><rect x="56" y="27" width="48" height="38" rx="4"/><path d="M56 37 H104"/></g>
-        <path class="dev" d="M70 104 H90 L94 122 H66 Z"/>
-        <rect class="dev" x="48" y="122" width="64" height="7" rx="3"/>
-        <text x="80" y="154">WINDOWS</text>
-      </g>
-      <!-- Linux: a laptop with a terminal -->
-      <g transform="translate(190 236)">
-        <rect class="dev" x="12" y="0" width="156" height="98" rx="9"/>
-        <rect class="screen" x="21" y="9" width="138" height="78" rx="3"/>
-        <text x="46" y="38" style="fill:#d946ef;text-anchor:start;font:700 16px ui-monospace,Menlo,monospace">&gt;_</text>
-        <rect x="46" y="50" width="70" height="5" rx="2" fill="#2e2547"/><rect x="46" y="62" width="46" height="5" rx="2" fill="#2e2547"/>
-        <path class="dev" d="M0 104 H180 L170 116 H10 Z"/>
-        <text x="90" y="142">LINUX</text>
-      </g>
-    </svg>
+    <div class="shot"><img src="sending.png" width="2560" height="1560" alt="AnySync window: a Windows desktop on the left sending to a Linux laptop on the right"></div>
   </div>
 </header>
 
+<svg class="divider" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 54 C 360 54 520 16 720 35 S 1080 16 1440 16"/><path class="run" style="animation-delay:-0s" d="M0 54 C 360 54 520 16 720 35 S 1080 16 1440 16"/><path d="M0 16 C 360 16 520 54 720 35 S 1080 54 1440 54"/><path class="run" style="animation-delay:-2s" d="M0 16 C 360 16 520 54 720 35 S 1080 54 1440 54"/></svg>
+
 <section id="how">
   <div class="wrap">
-    <h2 data-tr="Nasıl çalışır">How it works</h2>
-    <p class="sub" data-tr="Sunucu yok. İki cihaz, senin özel bir GitHub reposun üzerinden anlaşır; dosyaların kendisi oraya hiç gitmez.">No server. The two devices agree through a private GitHub repository of yours; the files themselves never go there.</p>
-    <div class="steps">
-      <div class="step"><b>01</b><h3 data-tr="Sor">Ask</h3><p data-tr="Bir cihaz ötekinden göndermek ya da almak için izin ister; öteki onaylar.">One device asks the other to send or to receive, and the other approves.</p></div>
-      <div class="step"><b>02</b><h3 data-tr="Seç">Pick</h3><p data-tr="Gönderen elindekini sunar. Alan, kendi sisteminde yeri olanları alır; istersen yalnızca seçtiklerini.">The sender offers what it has. The receiver takes what has a place on its own system, or only what you name.</p></div>
-      <div class="step"><b>03</b><h3 data-tr="Taşı">Move</h3><p data-tr="Dosyalar ağın üzerinden doğrudan gider, XChaCha20-Poly1305 ile şifreli. Kopan bağlantı kaldığı yerden devam eder.">Files go straight over your network, sealed with XChaCha20-Poly1305. A dropped connection picks up where it stopped.</p></div>
-      <div class="step"><b>04</b><h3 data-tr="Bitir">Finish</h3><p data-tr="Her öğe, kendi sisteminin tuttuğu yere iner. GOAL.md, AI ajanına kalanı söyler: değişecek yollar, listelerden kurulacak araçlar.">Each item lands where its system keeps it. GOAL.md tells your AI agent what is left: paths to rewrite, tools to install from the lists.</p></div>
+    <span class="caps">How it works</span>
+    <h2>GitHub introduces them, <em>the devices talk direct</em></h2>
+    <p class="sub">Your devices meet in a private GitHub repo of yours. The files never go there: they travel from one computer to the other, whichever systems the two run.</p>
+
+    <div class="stage reveal">
+      <div class="stage-head"><span class="caps">01</span><h3>Any system sends, any system receives</h3><p>A Windows desktop hands its setup to a Linux laptop, a Mac to a PC, or any other pair.</p></div>
+      <svg viewBox="0 0 1100 380" role="img" aria-label="Two devices meet in a private GitHub repo and send files to each other directly">
+        <defs><linearGradient id="wireGrad" x1="0" x2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
+        <path id="c1" class="wire" d="M 150 230 C 150 150 300 100 400 100"/>
+        <path id="c2" class="wire" d="M 700 100 C 800 100 950 150 950 230"/>
+        <path class="wire hot" d="M 150 230 C 150 150 300 100 400 100"/>
+        <path class="wire hot" style="animation-delay:-.6s" d="M 700 100 C 800 100 950 150 950 230"/>
+        <path id="dw" class="wire" d="M 265 300 C 420 300 450 340 550 340 S 690 300 835 300"/>
+        <path class="wire hot" style="stroke-width:4" d="M 265 300 C 420 300 450 340 550 340 S 690 300 835 300"/>
+        <g class="node repo" transform="translate(400 20)">
+          <rect width="300" height="170" rx="20"/>
+          <text class="t" x="22" y="38">you / anysync-bus</text>
+          <text class="s" x="22" y="60">Private repo: the meeting point</text>
+          <text class="folder on" x="22" y="98">▸ devices/</text>
+          <text class="folder on" style="animation-delay:1s" x="22" y="124">▸ requests/</text>
+          <text class="folder on" style="animation-delay:2s" x="22" y="150">▸ transfers/</text>
+        </g>
+        <g class="node" transform="translate(35 240)"><rect width="230" height="100" rx="16"/><rect class="scr" x="14" y="14" width="44" height="30" rx="3"/><path class="ink" d="M36 44 V52 M26 53 H46"/><text class="t" x="72" y="38">Desk PC</text><text class="s" x="72" y="60">Windows #7f3a2c91</text><text class="s" x="72" y="82" fill="#d946ef">sends</text></g>
+        <g class="node" transform="translate(835 240)"><rect width="230" height="100" rx="16"/><rect class="scr" x="16" y="18" width="40" height="27" rx="4"/><path class="ink" d="M10 50 H62 M22 26 l5 4 -5 4 M30 37 H40"/><text class="t" x="72" y="38">Travel laptop</text><text class="s" x="72" y="60">Linux #5b21d0aa</text><text class="s" x="72" y="82" fill="#5eead4">receives</text></g>
+        <text class="s" x="30" y="112" style="font:500 12px var(--mono);fill:var(--muted)">ids, requests, sealed keys</text>
+        <text class="s" x="550" y="372" text-anchor="middle" style="font:500 12px var(--mono);fill:var(--muted)">files: device to device, end-to-end encrypted</text>
+        <circle class="pkt v" r="5"><animateMotion dur="3s" repeatCount="indefinite"><mpath href="#c1"/></animateMotion></circle>
+        <circle class="pkt v" r="5"><animateMotion dur="3s" begin="1.5s" repeatCount="indefinite"><mpath href="#c2"/></animateMotion></circle>
+        <circle class="pkt" r="7"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#dw"/></animateMotion></circle>
+        <circle class="pkt" r="7"><animateMotion dur="2.4s" begin=".8s" repeatCount="indefinite"><mpath href="#dw"/></animateMotion></circle>
+        <circle class="pkt" r="7"><animateMotion dur="2.4s" begin="1.6s" repeatCount="indefinite"><mpath href="#dw"/></animateMotion></circle>
+      </svg>
     </div>
+
+    <div class="stage reveal">
+      <div class="stage-head"><span class="caps">02</span><h3>From one computer to the next</h3></div>
+      <div class="steps">
+        <div class="rail" aria-hidden="true"><svg viewBox="0 0 1000 30" preserveAspectRatio="none"><path d="M0 15 C 100 0 150 30 250 15 S 400 0 500 15 S 650 30 750 15 S 900 0 1000 15" fill="none" stroke="var(--edge)" stroke-width="2"/><circle r="6" fill="var(--red2)"><animateMotion dur="10s" repeatCount="indefinite" path="M0 15 C 100 0 150 30 250 15 S 400 0 500 15 S 650 30 750 15 S 900 0 1000 15"/></circle></svg></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></div><span class="n">01</span><h4>Find</h4><p>The devices on your account show up as Macs, PCs and Linux machines. Click one to pick it.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 8h15l-4-4M20 16H5l4 4"/></svg></div><span class="n">02</span><h4>Ask</h4><p>Choose to send or to receive. The other device asks its owner to approve.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><span class="n">03</span><h4>Pick</h4><p>The sender offers what it has; each item says where it lands, or that it has no place there.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h10l6 6-6 6H4z"/></svg></div><span class="n">04</span><h4>Move</h4><p>Only the picks travel, straight across and encrypted. A cut connection asks again for what is missing.</p></div>
+        <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg></div><span class="n">05</span><h4>Finish</h4><p>Each item lands in its place, and GOAL.md tells your AI agent what is left to do.</p></div>
+      </div>
+    </div>
+
+    <div class="stage reveal">
+      <div class="stage-head"><span class="caps">03</span><h3>Everything lands in its own place</h3><p>An item travels by name, not by the sender's paths.</p></div>
+      <div class="land"><table>
+        <thead><tr><th>Item</th><th>macOS</th><th>Windows</th><th>Linux</th></tr></thead>
+        <tbody>
+        <tr><td>VS Code settings</td><td><code>~/Library/Application Support/Code/User</code></td><td><code>%APPDATA%\Code\User</code></td><td><code>~/.config/Code/User</code></td></tr>
+        <tr><td>GnuPG</td><td><code>~/.gnupg</code></td><td><code>%APPDATA%\gnupg</code></td><td><code>~/.gnupg</code></td></tr>
+        <tr><td>Chrome bookmarks</td><td><code>~/Library/Application Support/Google/Chrome</code></td><td><code>%LOCALAPPDATA%\Google\Chrome\User Data</code></td><td><code>~/.config/google-chrome</code></td></tr>
+        <tr><td>PowerShell profile</td><td><code>~/.config/powershell</code></td><td><code>~/Documents/PowerShell</code></td><td><code>~/.config/powershell</code></td></tr>
+        <tr><td>Videos</td><td><code>~/Movies</code></td><td><code>%USERPROFILE%\Videos</code></td><td><code>~/Videos</code></td></tr>
+        </tbody></table></div>
+      <p class="note">Whatever was already in place is kept next to it as <code>.before-anysync</code>. Paths of the old home inside text configs are listed in the brief for the agent to rewrite, with separators changed when the systems differ.</p>
+    </div>
+    <a class="more" href="docs/">Read the docs →</a>
   </div>
 </section>
 
-<section id="where">
+<section id="features">
   <div class="wrap">
-    <h2 data-tr="Her şey kendi yerine iner">Everything lands in its own place</h2>
-    <p class="sub" data-tr="Bir öğe göndericinin yollarıyla değil, adıyla taşınır; alıcı onu kendi sistemindeki yerine koyar ve oradakini <code>.before-anysync</code> olarak saklar.">An item travels by name, not by the sender's paths; the receiver puts it where its own system keeps it, and keeps what was there as <code>.before-anysync</code>.</p>
-    <div class="table">
-      <table>
-        <tr><th data-tr="Öğe">Item</th><th>macOS</th><th>Windows</th><th>Linux</th></tr>
-        <tr><td data-tr="VS Code ayarları">VS Code settings</td><td><code>~/Library/Application Support/Code/User</code></td><td><code>%APPDATA%\Code\User</code></td><td><code>~/.config/Code/User</code></td></tr>
-        <tr><td data-tr="Git ayarı">Git config</td><td><code>~/.gitconfig</code></td><td><code>%USERPROFILE%\.gitconfig</code></td><td><code>~/.gitconfig</code></td></tr>
-        <tr><td>Claude Code</td><td><code>~/.claude</code></td><td><code>%USERPROFILE%\.claude</code></td><td><code>~/.claude</code></td></tr>
-        <tr><td data-tr="Wave ayarları">Wave config</td><td><code>~/.config/waveterm</code></td><td><code>%USERPROFILE%\.config\waveterm</code></td><td><code>~/.config/waveterm</code></td></tr>
-        <tr><td data-tr="Videolar">Videos</td><td><code>~/Movies</code></td><td><code>%USERPROFILE%\Videos</code></td><td><code>~/Videos</code></td></tr>
-      </table>
+    <span class="caps">Features</span>
+    <h2>What makes the crossing painless</h2>
+    <p class="sub">One small app on every computer, the same window on all three systems.</p>
+    <div class="grid">
+      <div class="card reveal"><span class="k">ANY TO ANY</span><h3>Every pair, either way</h3><p>macOS, Windows and Linux in any pair. No fixed sender: either side sends or receives, chosen per session.</p></div>
+      <div class="card reveal"><span class="k">BY NAME</span><h3>Items, not paths</h3><p>VS Code's settings are one item that knows its folder on each system, so it lands where the new one keeps it.</p></div>
+      <div class="card reveal"><span class="k">FITS</span><h3>Only what has a place</h3><p>The receiver sees what fits its own system and ticks what it wants. What has no place there says so.</p></div>
+      <div class="card reveal"><span class="k">DIRECT</span><h3>Straight across, not via a cloud</h3><p>Files go device to device over your network. GitHub only carries who is who and the sealed keys.</p></div>
+      <div class="card reveal"><span class="k">SEALED</span><h3>End-to-end encrypted</h3><p>Offers, picks and keys are sealed to each device's own key; files stream under XChaCha20-Poly1305.</p></div>
+      <div class="card reveal"><span class="k">BRIEF</span><h3>Your agent finishes it</h3><p>GOAL.md says what landed where, which paths to rewrite and which tools to install from the lists.</p></div>
+    </div>
+    <a class="more" href="features/">All features →</a>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <span class="caps">The app</span>
+    <h2><em>Any~Sync</em> window</h2>
+    <p class="sub">The device running the app is always on the left, the other on the right; the lines run from sender to receiver.</p>
+    <div class="gallery">
+      <figure class="reveal"><img src="start.png" width="2560" height="1560" alt="01 · This device on the left, the other still to find" loading="lazy"><figcaption>01 · This device on the left, the other still to find</figcaption></figure>
+      <figure class="reveal"><img src="find.png" width="2560" height="1560" alt="02 · The devices on this account: Mac, Windows and Linux" loading="lazy"><figcaption>02 · The devices on this account: Mac, Windows and Linux</figcaption></figure>
+      <figure class="reveal"><img src="request.png" width="2560" height="1560" alt="03 · The other device approves" loading="lazy"><figcaption>03 · The other device approves</figcaption></figure>
+      <figure class="reveal"><img src="pick.png" width="2560" height="1560" alt="04 · Pick: each item says where it lands" loading="lazy"><figcaption>04 · Pick: each item says where it lands</figcaption></figure>
+      <figure class="reveal"><img src="sending.png" width="2560" height="1560" alt="Sending: the lines flow toward the receiver" loading="lazy"><figcaption>Sending: the lines flow toward the receiver</figcaption></figure>
+      <figure class="reveal"><img src="done.png" width="2560" height="1560" alt="Done: the brief is ready for your agent" loading="lazy"><figcaption>Done: the brief is ready for your agent</figcaption></figure>
     </div>
   </div>
 </section>
 
-<section>
-  <div class="wrap cols">
-    <div class="card yes">
-      <h3 data-tr="Taşınanlar">What moves</h3>
-      <ul>
-        <li data-tr="<strong>Dosyalar:</strong> Masaüstü, Belgeler, İndirilenler, Resimler, Müzik, Videolar; her üst öğe ayrı seçilir. <code>node_modules</code>, <code>target</code>, <code>.venv</code> gibi yeniden kurulanlar geride kalır."><strong>Files:</strong> Desktop, Documents, Downloads, Pictures, Music, Videos, each top-level item on its own. Folders rebuilt from source, like <code>node_modules</code>, <code>target</code> and <code>.venv</code>, stay behind.</li>
-        <li data-tr="<strong>Kabuk ve git:</strong> git ayarı, SSH ve GnuPG anahtarları, zsh, bash ve PowerShell ayarları."><strong>Shell and git:</strong> git config, SSH and GnuPG keys, zsh, bash and PowerShell profiles.</li>
-        <li data-tr="<strong>Editörler ve terminaller:</strong> VS Code, Cursor, Zed, Wave."><strong>Editors and terminals:</strong> VS Code, Cursor, Zed, Wave.</li>
-        <li data-tr="<strong>Notlar, tarayıcılar, AI araçları:</strong> Obsidian, Chrome, Brave, Edge ve Chromium yer imleri, Claude Code, Codex."><strong>Notes, browsers, AI tools:</strong> Obsidian, bookmarks of Chrome, Brave, Edge and Chromium, Claude Code, Codex.</li>
-        <li data-tr="<strong>Kurulu araçların listeleri:</strong> Homebrew, winget, Scoop, apt, dnf, pacman, Flatpak, Snap, npm, cargo, pipx, VS Code ve Cursor eklentileri."><strong>Lists of installed tools:</strong> Homebrew, winget, Scoop, apt, dnf, pacman, Flatpak, Snap, npm, cargo, pipx, VS Code and Cursor extensions.</li>
-      </ul>
+<section id="moves">
+  <div class="wrap">
+    <span class="caps">Across systems</span>
+    <h2>What crosses, <em>and what can't</em></h2>
+    <p class="sub">AnySync takes what still means something on the other system, and says plainly what it leaves behind.</p>
+    <div class="cols">
+      <div class="box yes reveal">
+        <h3>What moves</h3>
+        <ul>
+          <li><strong>Files:</strong> Desktop, Documents, Downloads, Pictures, Music and Videos, each top-level item on its own. Folders rebuilt from source, like <code>node_modules</code>, <code>target</code> and <code>.venv</code>, stay behind.</li>
+          <li><strong>Shell and git:</strong> git config, SSH and GnuPG keys, zsh, bash and PowerShell profiles.</li>
+          <li><strong>Editors and terminals:</strong> VS Code, Cursor, Zed, Wave.</li>
+          <li><strong>Notes, browsers, AI tools:</strong> Obsidian's vault list, bookmarks of Chrome, Brave, Edge and Chromium, Claude Code, Codex.</li>
+          <li><strong>Lists of installed tools:</strong> Homebrew, winget, Scoop, apt, dnf, pacman, Flatpak, Snap, npm, cargo, pipx, VS Code and Cursor extensions.</li>
+        </ul>
+      </div>
+      <div class="box no reveal">
+        <h3>What stays, and why</h3>
+        <ul>
+          <li><strong>The apps themselves:</strong> one system's programs don't run on another; your agent installs them again from the lists.</li>
+          <li><strong>Passwords saved in browsers:</strong> they are sealed with a key the system holds (macOS keychain, Windows DPAPI, Linux secret service). Use the browser's own sync or its password export.</li>
+          <li><strong>System settings and the machine's identity:</strong> a Tailscale node, remote desktop ids and the like.</li>
+          <li><strong>Logins:</strong> AI tools and apps are signed in again on the new computer.</li>
+        </ul>
+      </div>
     </div>
-    <div class="card no">
-      <h3 data-tr="Taşınmayanlar, ve nedeni">What stays, and why</h3>
+  </div>
+</section>
+
+<section id="layout">
+  <div class="wrap split">
+    <div>
+      <span class="caps">In the repo</span>
+      <h2>Only the handshake lives on GitHub.</h2>
+      <pre class="tree"><span class="r">you/anysync-bus/</span>           <span class="c"># private</span>
+├── devices/
+│   ├── 7f3a2c91.json    <span class="c"># name, system, look, public key</span>
+│   └── 5b21d0aa.json
+├── requests/            <span class="c"># send or receive, to approve</span>
+└── transfers/
+    └── 20261126-1605_7f3a2c91_5b21d0aa/
+        ├── session.json <span class="c"># progress</span>
+        ├── offer.sealed <span class="c"># what the sender offers</span>
+        ├── picks.sealed <span class="c"># what the receiver takes</span>
+        └── key.sealed   <span class="c"># stream key and address</span></pre>
+    </div>
+    <div class="box reveal" style="margin-top:58px">
+      <h3>Never on GitHub</h3>
       <ul>
-        <li data-tr="<strong>Uygulamaların kendisi:</strong> bir sistemin programı ötekinde çalışmaz; listelerden yeniden kurulur."><strong>The apps themselves:</strong> one system's programs don't run on another; they are installed again from the lists.</li>
-        <li data-tr="<strong>Tarayıcıda kayıtlı şifreler:</strong> sistemin tuttuğu bir anahtarla şifreli (macOS Anahtar Zinciri, Windows DPAPI, Linux secret service); başka sistemde açılmaz. Tarayıcının kendi eşitlemesini ya da şifre dışa aktarmasını kullan."><strong>Passwords saved in browsers:</strong> they are sealed with a key the system holds (macOS keychain, Windows DPAPI, Linux secret service) and can't be opened on another system. Use the browser's own sync or its password export.</li>
-        <li data-tr="<strong>Sistem ayarları ve makinenin kimliği:</strong> Tailscale düğümü, uzak masaüstü kimlikleri gibi."><strong>System settings and the machine's identity:</strong> a Tailscale node, remote desktop ids and the like.</li>
+        <li>Your files: they go from device to device</li>
+        <li>Anything readable about what you move: offers and picks are sealed</li>
+        <li>Your GitHub sign in: AnySync asks the GitHub CLI for it each time</li>
+        <li>Anything you leave unticked</li>
       </ul>
     </div>
   </div>
@@ -211,40 +229,40 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 
 <section id="family">
   <div class="wrap">
-    <h2 data-tr="Aile">The family</h2>
-    <p class="sub" data-tr="İki ucu aynı sistemde olanlar çok daha derine iner: aynı yollar, aynı ayar sistemi, aynı anahtarlık. AnySync, sistemler arasında hâlâ anlamı olanı taşır.">The native ones go much deeper, since both ends share the same paths, preferences and keychain. AnySync takes what still means something on the other system.</p>
-    <div class="family">
-      <a href="https://macysync.vercel.app/"><span class="tag">MYSY</span><strong>MacySync</strong><span data-tr="Mac'ten Mac'e">Mac to Mac</span></a>
-      <div><span class="tag">WYSY</span><strong>WindySync</strong><span data-tr="Windows'tan Windows'a, sırada">Windows to Windows, coming</span></div>
-      <div><span class="tag">LYSY</span><strong>LinySync</strong><span data-tr="Linux'tan Linux'a, sırada">Linux to Linux, coming</span></div>
-      <div class="here"><span class="tag">NYSYN</span><strong>AnySync</strong><span data-tr="Herhangi birinden herhangi birine">Any of them to any of them</span></div>
+    <span class="caps">The family</span>
+    <h2>One family, <em>every kind of move</em></h2>
+    <p class="sub">Same makers, same look. The native ones go deepest, since both ends share the same paths and settings; AnySync crosses between systems; WavySync keeps Wave Terminal in step.</p>
+    <div class="fam">
+      <a class="fm" href="https://macysync.vercel.app/" style="--fa:#4c9dff;--fbg:#0a0e14;--fe:#2a3749"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 44 C 80 44 100 16 160 16 S 240 40 300 40"/><path class="fr" style="animation-delay:-0.0s" d="M0 44 C 80 44 100 16 160 16 S 240 40 300 40"/></svg><span class="fk">MYSY</span><b>Macy<i>~</i>Sync</b><span class="fl">Mac to Mac</span></a>
+      <a class="fm" href="https://windysync.vercel.app/" style="--fa:#67e8f9;--fbg:#0b1517;--fe:#1d3a40"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 42 H 232 C 266 42 274 16 254 10 C 238 6 226 22 240 30"/><path class="fr" style="animation-delay:-0.0s" d="M0 42 H 232 C 266 42 274 16 254 10 C 238 6 226 22 240 30"/><path class="fb" d="M40 24 H 170 C 186 24 190 12 180 10"/><path class="fr" style="animation-delay:-1.3s" d="M40 24 H 170 C 186 24 190 12 180 10"/></svg><span class="fk">WYSY</span><b>Windy<i>~</i>Sync</b><span class="fl">Windows to Windows</span></a>
+      <a class="fm" href="https://linysync.vercel.app/" style="--fa:#fbbf24;--fbg:#14120e;--fe:#3a3122"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 46 H 70 V 30 H 160 V 46 H 214 V 16 H 300"/><path class="fr" style="animation-delay:-0.0s" d="M0 46 H 70 V 30 H 160 V 46 H 214 V 16 H 300"/><path class="fb" d="M30 20 H 120 V 8 H 190"/><path class="fr" style="animation-delay:-1.3s" d="M30 20 H 120 V 8 H 190"/></svg><span class="fk">LYSY</span><b>Liny<i>~</i>Sync</b><span class="fl">Linux to Linux, any distro</span></a>
+      <a class="fm here" href="https://anysync.vercel.app/" style="--fa:#d946ef;--fbg:#120f1c;--fe:#2e2547"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 46 C 90 46 110 14 150 30 S 230 14 300 14"/><path class="fr" style="animation-delay:-0.0s" d="M0 46 C 90 46 110 14 150 30 S 230 14 300 14"/><path class="fb" d="M0 14 C 90 14 110 46 150 30 S 230 46 300 46"/><path class="fr" style="animation-delay:-1.3s" d="M0 14 C 90 14 110 46 150 30 S 230 46 300 46"/></svg><span class="fk">NYSYN</span><b>Any<i>~</i>Sync</b><span class="fl">Between macOS, Windows and Linux</span><span class="fh">you are here</span></a>
+      <a class="fm" href="https://wavysync.vercel.app/" style="--fa:#ff3355;--fbg:#120d19;--fe:#3a2d4f"><svg viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path class="fb" d="M0 30 C 25 10 50 10 75 30 S 125 50 150 30 S 200 10 225 30 S 275 50 300 30"/><path class="fr" style="animation-delay:-0.0s" d="M0 30 C 25 10 50 10 75 30 S 125 50 150 30 S 200 10 225 30 S 275 50 300 30"/></svg><span class="fk">WYSY</span><b>Wavy<i>~</i>Sync</b><span class="fl">Wave Terminal, the same on every computer</span></a>
     </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <span class="caps">Download</span>
+    <h2>Get <em>Any~Sync</em>.</h2>
+    <div class="dl">
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>macOS</b><span>Apple silicon and Intel</span><i>Releases →</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Windows</b><span>x64</span><i>Releases →</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Linux</b><span>x64</span><i>Releases →</i></a>
+    </div>
+    <p class="note">Not released yet: the first builds for all three systems will be on the releases page. The window and the command line are one program, <code>anysync</code>; it needs the GitHub CLI signed in (<code>gh auth login</code>).</p>
+    <a class="more" href="download/">Download page →</a>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
     <span>AnySync · MIT · Ege BULUT</span>
-    <span data-tr="Apple, Microsoft ya da Linux Foundation ile bağlantısı yoktur; markalar sahiplerinindir.">Not affiliated with Apple, Microsoft or the Linux Foundation; the names are their owners' trademarks.</span>
+    <span>Not affiliated with Apple, Microsoft or the Linux Foundation; the names are their owners' trademarks.</span>
   </div>
 </footer>
 
-<script>
-(() => {
-  const els = [...document.querySelectorAll("[data-tr]")];
-  els.forEach(e => e.dataset.en = e.innerHTML);
-  const btn = document.getElementById("lang");
-  const set = tr => {
-    els.forEach(e => e.innerHTML = tr ? e.dataset.tr : e.dataset.en);
-    document.documentElement.lang = tr ? "tr" : "en";
-    btn.textContent = tr ? "EN" : "TR";
-    try { localStorage.setItem("anysync-lang", tr ? "tr" : "en"); } catch (_) {}
-  };
-  let saved = null;
-  try { saved = localStorage.getItem("anysync-lang"); } catch (_) {}
-  if (saved === "tr" || (!saved && (navigator.language || "").startsWith("tr"))) set(true);
-  btn.addEventListener("click", () => set(document.documentElement.lang !== "tr"));
-})();
-</script>
+<script src="site.js"></script>
 </body>
 </html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features: any system to any system · AnySync</title>
+<meta name="description" content="Pick devices of any system, approve, tick what fits the receiver, move it end-to-end encrypted, and hand the rest to your AI agent with GOAL.md.">
+<link rel="canonical" href="https://anysync.vercel.app/features/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AnySync">
+<meta property="og:url" content="https://anysync.vercel.app/features/">
+<meta property="og:title" content="Features: any system to any system · AnySync">
+<meta property="og:description" content="Pick devices of any system, approve, tick what fits the receiver, move it end-to-end encrypted, and hand the rest to your AI agent with GOAL.md.">
+<meta property="og:image" content="https://anysync.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Features: any system to any system · AnySync">
+<meta name="twitter:description" content="Pick devices of any system, approve, tick what fits the receiver, move it end-to-end encrypted, and hand the rest to your AI agent with GOAL.md.">
+<meta name="twitter:image" content="https://anysync.vercel.app/og.png">
+<meta name="theme-color" content="#120f1c">
+<link rel="alternate" hreflang="en" href="https://anysync.vercel.app/features/">
+<link rel="alternate" hreflang="tr" href="https://anysync.vercel.app/tr/features/">
+<link rel="alternate" hreflang="x-default" href="https://anysync.vercel.app/features/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23120f1c'/%3E%3Cpath d='M7 7L25 25M25 7L7 25' stroke='%23d946ef' stroke-width='3.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%235eead4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="../"><span>Any<b>~</b>Sync</span> <small>NYSYN</small></a>
+    <div class="links">
+      <a href="../#how" class="opt">How it works</a>
+      <a href="../features/" class="on">Features</a>
+      <a href="../docs/">Docs</a>
+      <a href="../changelog/" class="opt">Changelog</a>
+      <a href="../#family" class="opt">Family</a>
+      <a href="../download/">Download</a>
+    </div>
+    <a class="btn lang" id="lang" href="../tr/features/" hreflang="tr" aria-label="Türkçe">TR</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="wrap">
+    <span class="caps">Features</span>
+    <h1>Everything <em>Any~Sync</em> does</h1>
+    <p class="sub">One small Rust app on every computer that makes a new one, of any system, feel like your old one.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="frow reveal">
+      <div><span class="caps">DEVICE</span><h3>Each device draws itself</h3><p>On the Device tab you name this computer and choose how it is drawn: a Mac model, a Windows desktop or laptop, or a Linux machine with its distro's name on a small badge. All drawings are original shapes, no company logos.</p></div>
+      <img src="../device.png" width="2560" height="1560" alt="Each device draws itself" loading="lazy">
+    </div>
+    <div class="frow reveal">
+      <div><span class="caps">CONNECT</span><h3>The devices on your account</h3><p>Find devices on this account lists every computer registered in your bus repo, whatever it runs. Pick one, choose to send or to receive, and the other device shows a request its owner approves or declines.</p></div>
+      <img src="../find.png" width="2560" height="1560" alt="The devices on your account" loading="lazy">
+    </div>
+    <div class="frow reveal">
+      <div><span class="caps">PICK</span><h3>Offered by what fits</h3><p>The sender scans what it has. The receiver sees it as a tree grouped by kind, and each item says where it lands on this system, or that it has no place here. Ticking a group ticks everything in it.</p></div>
+      <img src="../pick.png" width="2560" height="1560" alt="Offered by what fits" loading="lazy">
+    </div>
+    <div class="frow reveal">
+      <div><span class="caps">MOVE</span><h3>Straight across, and it resumes</h3><p>Only the picks travel, device to device over your network, as an authenticated XChaCha20-Poly1305 stream. A minute without a byte counts as a cut, and the receiver asks again for what has not arrived.</p></div>
+      <img src="../sending.png" width="2560" height="1560" alt="Straight across, and it resumes" loading="lazy">
+    </div>
+    <div class="frow reveal">
+      <div><span class="caps">BRIEF</span><h3>A brief your agent can act on</h3><p>Each item lands where this system keeps it, and what was there is kept as <code>.before-anysync</code>. Then the receiver writes GOAL.md: what landed where, the problems, the old home's paths to rewrite and the lists of tools to install. On a Mac it also writes a preflight script for Apple's command line tools, Homebrew and Node.</p></div>
+      <img src="../done.png" width="2560" height="1560" alt="A brief your agent can act on" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="tight">
+  <div class="wrap">
+    <span class="caps">The catalogue</span>
+    <h2>Everything it knows how to move</h2>
+    <p class="sub">✓ means the item has a place on that system. An item is only offered when the receiver has one.</p>
+    <div class="land fit"><table>
+      <thead><tr><th>Item</th><th>macOS</th><th>Windows</th><th>Linux</th></tr></thead>
+      <tbody>
+      <tr><td>Desktop, Documents, Downloads, Pictures, Music, Videos</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Git config</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>SSH keys and config</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>GnuPG</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>zsh and bash config</td><td>✓</td><td>no place</td><td>✓</td></tr>
+      <tr><td>PowerShell profile</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>VS Code, Cursor and Zed settings</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Wave config</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Obsidian vault list</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Chrome, Brave, Edge and Chromium bookmarks</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Claude Code settings, skills, agents, commands</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Codex config</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      </tbody></table></div>
+    <h2 style="margin-top:60px">Lists of what is installed</h2>
+    <p class="sub">Made on the sender by the system's own tools and sent as text; your agent installs from them on the other side.</p>
+    <div class="land"><table>
+      <thead><tr><th>List</th><th>Made on</th><th>Command</th></tr></thead>
+      <tbody>
+      <tr><td>VS Code and Cursor extensions</td><td>all three</td><td><code>code --list-extensions</code></td></tr>
+      <tr><td>Homebrew</td><td>macOS, Linux</td><td><code>brew bundle dump</code></td></tr>
+      <tr><td>winget, Scoop</td><td>Windows</td><td><code>winget export</code>, <code>scoop export</code></td></tr>
+      <tr><td>apt, dnf, pacman</td><td>Linux</td><td><code>apt-mark showmanual</code>, <code>dnf repoquery --userinstalled</code>, <code>pacman -Qqe</code></td></tr>
+      <tr><td>Flatpak, Snap</td><td>Linux</td><td><code>flatpak list --app</code>, <code>snap list</code></td></tr>
+      <tr><td>npm, cargo, pipx</td><td>all three</td><td><code>npm ls -g</code>, <code>cargo install --list</code>, <code>pipx list</code></td></tr>
+      </tbody></table></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>AnySync · MIT · Ege BULUT</span>
+    <span>Not affiliated with Apple, Microsoft or the Linux Foundation; the names are their owners' trademarks.</span>
+  </div>
+</footer>
+
+<script src="../site.js"></script>
+</body>
+</html>
