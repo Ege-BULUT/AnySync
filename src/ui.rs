@@ -960,7 +960,7 @@ fn trigger(key: &str, s: impl Into<String>) -> El {
 
 fn menu(key: &str, w: f32, h: f32, items: Vec<El>) -> El {
     let list = col().w_full().gap(1.0).children(items);
-    col().fill(Color { r: 0.005, g: 0.004, b: 0.01, a: 1.0 }).border(1.0, EDGE).radius(10.0).padding(4.0).w(w)
+    col().fill(FIELD).border(1.0, EDGE).radius(10.0).padding(4.0).w(w)
         .shadow(18.0, 40.0, Color { r: 0.0, g: 0.0, b: 0.0, a: 0.5 })
         .child(list.scroll(ScrollSpec { stick_bottom: false }).scroll_edge_fade(10.0).h(h))
         .anchored(key, Side::Bottom, Align::Start, 4.0)
@@ -1288,7 +1288,7 @@ fn incoming(s: &S, r: &Request) -> El {
         Ask::Send => ("Receive a setup?", format!("{who} wants to send its settings, keys and files to this device. You pick what to take before anything moves.")),
         Ask::Receive => ("Send this setup?", format!("{who} wants to take this device's settings, keys and files. You pick what to offer before anything moves.")),
     };
-    let card = col().w_full().fill(Color { r: 0.006, g: 0.005, b: 0.014, a: 1.0 }).border(1.0, DEEP).radius(16.0).padding(22.0).gap(12.0)
+    let card = col().w_full().fill(FIELD).border(1.0, DEEP).radius(16.0).padding(22.0).gap(12.0)
         .shadow(30.0, 80.0, Color { r: 0.0, g: 0.0, b: 0.0, a: 0.6 })
         .child(caps("REQUEST", ACCENT))
         .child(label(title, 19.0, 700.0, INK))

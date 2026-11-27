@@ -184,6 +184,9 @@ fn lit(body: Color, t: f32) -> Color {
 }
 
 const BLACK: Color = Color { r: 0.004, g: 0.004, b: 0.005, a: 1.0 };
+/// The app's tint: a screen's glow from one corner to the other, and a Linux badge's text.
+const SCREEN: [Color; 3] = [Color { r: 0.02, g: 0.012, b: 0.06, a: 1.0 }, Color { r: 0.008, g: 0.004, b: 0.022, a: 1.0 }, Color { r: 0.04, g: 0.02, b: 0.09, a: 1.0 }];
+const BADGE_TEXT: Color = Color { r: 0.62, g: 0.6, b: 0.7, a: 1.0 };
 const WHITE: Color = Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
 
 pub const W: f32 = 1280.0;
@@ -236,7 +239,7 @@ fn badge(key: &str, name: &str, chin: [f32; 4]) -> El {
     let w = name.chars().count() as f32 * size * 0.62 + size * 1.4;
     el().key(format!("{key}-badge")).absolute(chin[0] + (chin[2] - w) / 2.0, chin[1] + (chin[3] - size * 1.4) / 2.0).size(w, size * 1.4).radius(size)
         .fill(Color { a: 0.09, ..WHITE }).center()
-        .child(text(name.to_string()).font(TextStyle::new(size, 600.0).mono()).color(Color { r: 0.62, g: 0.6, b: 0.7, a: 1.0 }))
+        .child(text(name.to_string()).font(TextStyle::new(size, 600.0).mono()).color(BADGE_TEXT))
 }
 
 /// A desktop monitor on a stand in the box a laptop takes: the panel where the lid would be, the foot near where
@@ -267,7 +270,7 @@ fn monitor(key: &str, body: Color, x: f32, y: f32, w: f32) -> Drawn {
 
 fn display(key: &str, s: [f32; 4], w: f32) -> El {
     el().key(format!("{key}-display")).absolute(s[0], s[1]).size(s[2], s[3]).radius(w * 0.012)
-        .linear_gradient(2.4, [(0.0, Color { r: 0.02, g: 0.012, b: 0.06, a: 1.0 }), (0.55, Color { r: 0.008, g: 0.004, b: 0.022, a: 1.0 }), (1.0, Color { r: 0.04, g: 0.02, b: 0.09, a: 1.0 })])
+        .linear_gradient(2.4, [(0.0, SCREEN[0]), (0.55, SCREEN[1]), (1.0, SCREEN[2])])
 }
 
 /// An open laptop seen from the front and a little above, its hinge centred on (`cx`, `hinge_y`). `width` is a
