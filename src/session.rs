@@ -147,6 +147,75 @@ pub fn brief(offer: &Offer, here: &Env, from: &str, placed: &[(Item, Vec<String>
     g
 }
 
+/// On a Mac receiver: installs what the picked items need before the agent starts: Apple's command line tools,
+/// Homebrew (for the Brewfile; the person runs it in Terminal, so the installer can ask for the password) and Node
+/// (for npm globals and Claude Code plugin hooks, which run `node`): with brew when it is here, else nodejs.org's
+/// LTS into ~/.local/node, no sudo. It only installs what is missing, and exits 1 when something is still missing.
+const PREFLIGHT: &str = r#"#!/bin/sh
+# Written by AnySync. Installs what the moved items need before the agent starts; safe to run again.
+NEED_BREW=__BREW__
+NEED_NODE=__NODE__
+BREWS=${PREFLIGHT_BREWS-"/opt/homebrew/bin/brew /usr/local/bin/brew"}
+ok=1
+say() { printf '\033[1m[AnySync]\033[0m %s\n' "$1"; }
+find_brew() { for b in $BREWS; do [ -x "$b" ] && { echo "$b"; return; }; done; }
+add_line() { grep -qsF "$1" "$HOME/.zprofile" || { printf '\n%s\n' "$1" >> "$HOME/.zprofile"; say "Added to ~/.zprofile: $1"; }; }
+# Node's LTS from nodejs.org into ~/.local/node, checked against its SHASUMS256, linked into ~/.local/bin. No sudo.
+node_tarball() {
+  arch=$(uname -m); [ "$arch" = x86_64 ] && arch=x64
+  idx=$(curl -fsSL https://nodejs.org/dist/index.json) || return 1
+  v=$(printf '%s' "$idx" | tr '{' '\n' | grep -v '"lts":false' | grep -m1 '"version"' | sed 's/.*"version":"\([^"]*\)".*/\1/')
+  [ -n "$v" ] || return 1
+  tar="node-$v-darwin-$arch.tar.gz"
+  tmp=$(mktemp -d) || return 1
+  curl -fsSL -o "$tmp/$tar" "https://nodejs.org/dist/$v/$tar" || return 1
+  want=$(curl -fsSL "https://nodejs.org/dist/$v/SHASUMS256.txt" | awk -v f="$tar" '$2 == f { print $1 }')
+  got=$(shasum -a 256 "$tmp/$tar" | awk '{ print $1 }')
+  if [ -z "$want" ] || [ "$want" != "$got" ]; then say "Node's download did not match its checksum."; return 1; fi
+  tar -xzf "$tmp/$tar" -C "$tmp" || return 1
+  rm -rf "${HOME:?}/.local/node" && mkdir -p "$HOME/.local/bin" && mv "$tmp/node-$v-darwin-$arch" "$HOME/.local/node" || return 1
+  for b in node npm npx; do ln -sf "$HOME/.local/node/bin/$b" "$HOME/.local/bin/$b"; done
+  rm -rf "$tmp"
+  add_line 'export PATH="$HOME/.local/bin:$PATH"'
+  export PATH="$HOME/.local/bin:$PATH"
+  say "Node $v is in ~/.local/node."
+}
+if ! xcode-select -p >/dev/null 2>&1; then
+  say "Apple's command line tools are missing. A window opens to install them; run this again when it finishes:"
+  say "  sh '$0'"
+  xcode-select --install
+  exit 1
+fi
+brew_bin=$(find_brew)
+# Homebrew only for a Brewfile: Node alone comes from nodejs.org without a password.
+if [ -z "$brew_bin" ] && [ "$NEED_BREW" = 1 ]; then
+  say "Installing Homebrew (it asks for this Mac's password)."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || say "Homebrew did not install."
+  brew_bin=$(find_brew)
+fi
+if [ -n "$brew_bin" ]; then
+  eval "$("$brew_bin" shellenv)"
+  # Terminal shells read ~/.zprofile; without this line brew and what it installs are not on PATH.
+  add_line "eval \"\$($brew_bin shellenv)\""
+elif [ "$NEED_BREW" = 1 ]; then
+  ok=0
+fi
+[ -x "$HOME/.local/node/bin/node" ] && export PATH="$HOME/.local/bin:$PATH"
+if [ "$NEED_NODE" = 1 ] && ! command -v node >/dev/null 2>&1; then
+  say "Installing Node."
+  { [ -n "$brew_bin" ] && "$brew_bin" install node; } || node_tarball || { say "Node did not install; get it from nodejs.org."; ok=0; }
+fi
+if [ "$ok" = 1 ]; then say "Tools ready."; else say "Some tools are missing; the agent puts them in TODO-FOR-YOU.md."; exit 1; fi
+"#;
+
+/// preflight.sh for these picked ids on a Mac, or None when they need no tool. `dir` holds `lists/brew.txt`.
+fn preflight(ids: &[&str], dir: &Path) -> Option<String> {
+    let brew = ids.contains(&"tools/brew");
+    let brew_node = std::fs::read_to_string(dir.join("lists/brew.txt")).is_ok_and(|b| b.lines().any(|l| l.trim_start().starts_with("brew \"node")));
+    let node = brew_node || ids.iter().any(|i| *i == "tools/npm" || i.starts_with("ai/claude"));
+    (brew || node).then(|| PREFLIGHT.replace("__BREW__", if brew { "1" } else { "0" }).replace("__NODE__", if node { "1" } else { "0" }))
+}
+
 /// Places every unpacked item and writes the brief in `dir`; returns (placed paths, problems).
 pub fn finish(offer: &Offer, picks: &Picks, here: &Env, from: &str, dir: &Path) -> (usize, usize) {
     let staging = dir.join("staging");
@@ -154,7 +223,13 @@ pub fn finish(offer: &Offer, picks: &Picks, here: &Env, from: &str, dir: &Path) 
         let (to, problems) = wire::place(i, &staging, here);
         (i.clone(), to, problems)
     }).collect();
-    let _ = std::fs::write(dir.join("GOAL.md"), brief(offer, here, from, &placed));
+    let mut goal = brief(offer, here, from, &placed);
+    let ids: Vec<&str> = placed.iter().map(|p| p.0.id.as_str()).collect();
+    if let Some(s) = preflight(&ids, dir).filter(|_| here.os == Os::Mac) {
+        let _ = std::fs::write(dir.join("preflight.sh"), s);
+        goal = goal.replacen("\n\n", "\n\nFirst run `sh preflight.sh` in this folder (in Terminal): it installs Apple's command line tools, Homebrew and Node where these items need them. What it can't do goes into TODO-FOR-YOU.md.\n\n", 1);
+    }
+    let _ = std::fs::write(dir.join("GOAL.md"), goal);
     (placed.iter().map(|p| p.1.len()).sum(), placed.iter().map(|p| p.2.len()).sum())
 }
 
@@ -273,6 +348,21 @@ pub fn receive(b: &Bus, secret: &[u8; 32], t: &str, from: &Device, here: &Env, c
 mod tests {
     use super::*;
     use crate::os::env;
+
+    #[test]
+    fn preflight_only_for_items_that_need_tools() {
+        let dir = std::env::temp_dir().join(format!("anysync-preflight-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join("lists")).unwrap();
+        assert!(preflight(&["dev/git", "files/documents"], &dir).is_none());
+        let s = preflight(&["ai/claude-code"], &dir).unwrap();
+        assert!(s.contains("NEED_BREW=0") && s.contains("NEED_NODE=1"));
+        std::fs::write(dir.join("lists/brew.txt"), "brew \"node\"\n").unwrap();
+        let s = preflight(&["tools/brew"], &dir).unwrap();
+        assert!(s.contains("NEED_BREW=1") && s.contains("NEED_NODE=1"), "a Brewfile with node needs Node too");
+        std::fs::write(dir.join("preflight.sh"), s).unwrap();
+        assert!(std::process::Command::new("/bin/sh").arg("-n").arg(dir.join("preflight.sh")).status().unwrap().success(), "valid sh");
+        let _ = std::fs::remove_dir_all(dir);
+    }
 
     #[test]
     fn a_windows_receiver_takes_only_what_it_has_a_place_for() {
