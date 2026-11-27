@@ -247,11 +247,12 @@
     <span class="caps">Download</span>
     <h2>Get <em>Any~Sync</em>.</h2>
     <div class="dl">
-      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>macOS</b><span>Apple silicon and Intel</span><i>Releases →</i></a>
-      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Windows</b><span>x64</span><i>Releases →</i></a>
-      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Linux</b><span>x64</span><i>Releases →</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest/download/anysync-macos-arm64.tar.gz"><b>macOS</b><span>Apple silicon</span><i>.tar.gz ↓</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest/download/anysync-windows-x64.exe"><b>Windows</b><span>x64</span><i>.exe ↓</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest/download/anysync-linux-x64.tar.gz"><b>Linux</b><span>x64</span><i>.tar.gz ↓</i></a>
     </div>
-    <p class="note">Not released yet: the first builds for all three systems will be on the releases page. The window and the command line are one program, <code>anysync</code>; it needs the GitHub CLI signed in (<code>gh auth login</code>).</p>
+    <p class="note">The window and the command line are one program, <code>anysync</code>. On macOS and Linux: <code>tar -xzf</code> the download, then <code>./anysync</code>; on Windows, run the <code>.exe</code>. It needs the GitHub CLI signed in (<code>gh auth login</code>). Older releases are on the <a href="https://github.com/Ege-BULUT/AnySync/releases">releases page</a>.</p>
+    <p class="note">The builds are not signed. On macOS, run <code>xattr -d com.apple.quarantine ./anysync</code> once if it is blocked; on Windows, SmartScreen asks once: <b>More info</b>, then <b>Run anyway</b>. On Linux the window needs the usual X11 or Wayland libraries. There is no Intel Mac build yet.</p>
     <a class="more" href="download/">Download page →</a>
   </div>
 </section>

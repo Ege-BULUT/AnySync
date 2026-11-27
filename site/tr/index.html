@@ -247,11 +247,12 @@
     <span class="caps">İndir</span>
     <h2><em>Any~Sync</em>'i indir.</h2>
     <div class="dl">
-      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>macOS</b><span>Apple silicon ve Intel</span><i>Sürümler →</i></a>
-      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Windows</b><span>x64</span><i>Sürümler →</i></a>
-      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest"><b>Linux</b><span>x64</span><i>Sürümler →</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest/download/anysync-macos-arm64.tar.gz"><b>macOS</b><span>Apple silicon</span><i>.tar.gz ↓</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest/download/anysync-windows-x64.exe"><b>Windows</b><span>x64</span><i>.exe ↓</i></a>
+      <a class="os" href="https://github.com/Ege-BULUT/AnySync/releases/latest/download/anysync-linux-x64.tar.gz"><b>Linux</b><span>x64</span><i>.tar.gz ↓</i></a>
     </div>
-    <p class="note">Henüz yayınlanmadı: üç sistemin ilk sürümleri sürümler sayfasında olacak. Pencere ve komut satırı tek bir programdır, <code>anysync</code>; girişi yapılmış GitHub CLI ister (<code>gh auth login</code>).</p>
+    <p class="note">Pencere ve komut satırı tek bir programdır, <code>anysync</code>. macOS ve Linux'ta indirdiğini <code>tar -xzf</code> ile aç, sonra <code>./anysync</code>; Windows'ta <code>.exe</code>'yi çalıştır. Girişi yapılmış GitHub CLI ister (<code>gh auth login</code>). Eski sürümler <a href="https://github.com/Ege-BULUT/AnySync/releases">sürümler sayfasında</a>.</p>
+    <p class="note">Sürümler imzalı değil. macOS engellerse bir kez <code>xattr -d com.apple.quarantine ./anysync</code> çalıştır; Windows'ta SmartScreen bir kez sorar: <b>Ek bilgi</b>, sonra <b>Yine de çalıştır</b>. Linux'ta pencere, olağan X11 ya da Wayland kütüphanelerini ister. Intel Mac için henüz sürüm yok.</p>
     <a class="more" href="download/">İndirme sayfası →</a>
   </div>
 </section>
