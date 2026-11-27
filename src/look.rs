@@ -84,7 +84,7 @@ pub fn short_name(m: &Model) -> String {
 // What the picker offers -----------------------------------------------------------------------------------
 
 /// (look.os, shown as)
-pub const SYSTEMS: [(&str, &str); 3] = [("mac", "macOS"), ("windows", "Windows"), ("linux", "Linux")];
+pub const SYSTEMS: &[(&str, &str)] = &[("mac", "macOS"), ("windows", "Windows"), ("linux", "Linux")];
 pub const KINDS: [&str; 2] = ["laptop", "desktop"];
 /// Chassis colours of a PC laptop, a monitor or a Mac desktop.
 pub const CHASSIS: [(&str, &str); 4] = [("Graphite", "#3b3e45"), ("Black", "#17181b"), ("Silver", "#b9bdc4"), ("White", "#e4e4e8")];
@@ -139,7 +139,7 @@ pub fn fix(look: &Look) -> Look {
     let kind = if KINDS.contains(&look.kind.as_str()) { look.kind.clone() } else { "laptop".into() };
     let model = match (os.as_str(), kind.as_str()) {
         ("mac", "laptop") => mac_model(&look.model).id.clone(),
-        ("linux", _) if !look.model.is_empty() => look.model.clone(),
+        ("linux", _) if look.os == "linux" && !look.model.is_empty() => look.model.clone(),
         ("linux", _) => DISTROS[0].into(),
         _ => String::new(),
     };

@@ -985,7 +985,7 @@ fn tab_device(s: &S, k: &Kit) -> El {
     let mut systems = row().gap(4.0);
     for (key, shown) in look::SYSTEMS {
         let n = look::with_os(&l, key);
-        systems = systems.child(seg(format!("os-{key}"), shown, l.os == key).on_press(move |s: &mut S| s.set_look(n.clone())));
+        systems = systems.child(seg(format!("os-{key}"), shown, l.os == *key).on_press(move |s: &mut S| s.set_look(n.clone())));
     }
     let mut kinds = row().gap(4.0);
     for kind in look::KINDS {
